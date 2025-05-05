@@ -15,6 +15,14 @@ This program started out as a windows batch script that accepted a filename and 
 - Required user input for doing simple operations is as minimal as possible, and UI is straight-forward, with a focus on function over form.
 - NO RE-ENCODING WHERE POSSIBLE! As a former user of industry standard "Pro" editing software, having to endure video re-encoding for a simple trim is stupid and unnecessary.
 
+# How to use
+Documentation on exact app usage instructions is in development. Here's a summary:
+- Step 1: Drag and drop or browse a video file into the file upload dialogue in the top.
+- Step 2: Select an operation to do from the dropdown list (ex. Trim)
+- Step 3: Fill out textboxes and required info (for Trim, write beginning/end timestamps, or apply them from the seeker head in the video preview!)
+- Step 4: Write the name of the output file, and optionally check the option to use CUDA encoding (Experimental, safe to use but performance may not be affected).
+- Step 5. Click "Run FFMPEG" and look at the box below for details on operation progress. On success, the output video is saved to the program's root folder.
+
 # Dependencies
   - FFMPEG
   - NodeJS
