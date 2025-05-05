@@ -4,7 +4,7 @@ Lightweight, multi-OS, lightning fast simple video editor.<br/>
 **!This program is in active alpha development and can do damage to you and your system if used improperly, use at your own discretion!**
 
 # Description
-ToastCut, previously called "toast-ffmpeg-electron", is an electron-based video editing suite, using FFMPEG for the video operations.
+ToastCut, previously called "toast-ffmpeg-electron", is an electron-based video editing suite, using FFmpeg for the video operations.
 This program started out as a windows batch script that accepted a filename and timestamps to trim a video length. After adding thousands of "if()" statements to the program to implement other functionalities, I decided to port the program into an electron app that can work in many OS's.
 
 ![App Screenshot](assets/screenshot.png)
@@ -21,10 +21,10 @@ Documentation on exact app usage instructions is in development. Here's a summar
 - Step 2: Select an operation to do from the dropdown list (ex. Trim)
 - Step 3: Fill out textboxes and required info (for Trim, write beginning/end timestamps, or apply them from the seeker head in the video preview!)
 - Step 4: Write the name of the output file, and optionally check the option to use CUDA encoding (Experimental, safe to use but performance may not be affected).
-- Step 5. Click "Run FFMPEG" and look at the box below for details on operation progress. On success, the output video is saved to the program's root folder.
+- Step 5. Click "Run FFmpeg" and look at the box below for details on operation progress. On success, the output video is saved to the program's root folder.
 
 # Dependencies
-  - FFMPEG
+  - FFmpeg
   - NodeJS
   - Electron-Builder
   - Electron
@@ -32,7 +32,7 @@ Documentation on exact app usage instructions is in development. Here's a summar
 # Building
 Follow the steps below to install the program and dependencies:
 1. Install Node.js (LTS) (https://nodejs.org)
-2. Install FFMPEG (https://www.ffmpeg.org/)
+2. Install FFmpeg (https://www.ffmpeg.org/)
 3. Clone the repository:
    ```
    git clone https://github.com/ToastKamiya/toastcut.git
