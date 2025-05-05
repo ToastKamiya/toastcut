@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./assets/style.css">
+  <title>ToastCut</title>
+</head>
+<body>
+  <h1>ToastCut</h1>
+  <h3>Powered by FFMPEG and Electron</h3>
+  <hr>
+  <div>
+  <label for="inputFile">Input Video File:</label>
+  <input type="file" id="inputFile" accept="video/*">
+  </div>
+  <div>
+    <video id="videoPreview" controls style="width: 400px; height: 225px; margin-top: 20px;">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <br>
+  <hr>
+
+  <div class="section">
+    <label for="operation">Select Operation:</label>
+    <select id="operation">
+      <option value="" disabled selected>Select your option</option>
+      <option value="TRIM">Trim</option>
+      <option value="CONCATENATE">Concatenate</option>
+      <option value="CROP">Crop</option>
+      <option value="VFRtoCFR">VFR to CFR</option>
+      <option value="MERGEAUDIO">Merge Audio</option>
+      <option value="BITRATE">Compress</option>
+    </select>
+  </div>
+
+  <div id="operationDetails" class="section"></div>
+
+  <button class="runbtn" id="runButton">Run FFMPEG</button>
+  <div></div>
+  <br>
+  <div id="progress" style="margin-top: 20px; color: green;"></div>
+  <div id="output"></div>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>

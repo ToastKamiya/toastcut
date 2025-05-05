@@ -1,0 +1,43 @@
+{
+  "name": "toastcut",
+  "version": "1.0.1",
+  "description": "A lightweight OS-agnostic video editor based on FFMPEG",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.ktoast.toastcut",
+    "productName": "ToastCut",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets/"
+      }
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "devDependencies": {
+    "electron": "34.0.1",
+    "electron-builder": "25.1.8"
+  }
+}
