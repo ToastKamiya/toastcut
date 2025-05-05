@@ -17,7 +17,7 @@ This program started out as a windows batch script that accepted a filename and 
 
 # How to use
 Documentation on exact app usage instructions is in development. Here's a summary:
-- Step 1: Drag and drop or browse a video file into the file upload dialogue in the top.
+- Step 1: Open the program (ToastCut.exe), drag and drop or browse a video file into the file upload dialogue in the top.
 - Step 2: Select an operation to do from the dropdown list (ex. Trim)
 - Step 3: Fill out textboxes and required info (for Trim, write beginning/end timestamps, or apply them from the seeker head in the video preview!)
 - Step 4: Write the name of the output file, and optionally check the option to use CUDA encoding (Experimental, safe to use but performance may not be affected).
