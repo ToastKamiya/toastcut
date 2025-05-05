@@ -18,7 +18,8 @@
       "renderer.js",
       "index.html",
       "styles.css",
-      "assets/**/*"
+      "assets/**/*",
+      "operations/*"
     ],
     "extraResources": [
       {
