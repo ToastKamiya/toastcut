@@ -51,3 +51,10 @@ Follow the steps below to install the program and dependencies:
    npm run build
 # License
 This program is licensed under the GPL v3.0 general public use license. See LICENSE.txt for more details.
+
+**FFmpeg Licensing Notice**
+
+This application bundles FFmpeg, which is licensed under the [LGPL/GPL](https://ffmpeg.org/legal.html) license.
+FFmpeg is copyright © the FFmpeg developers.
+
+See the [FFmpeg license](https://ffmpeg.org/legal.html) for details.
