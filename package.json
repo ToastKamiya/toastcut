@@ -31,7 +31,7 @@
       "target": "dmg"
     },
     "win": {
-      "target": "nsis"
+      "target": "portable"
     },
     "linux": {
       "target": "AppImage"
