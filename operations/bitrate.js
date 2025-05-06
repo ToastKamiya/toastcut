@@ -4,7 +4,8 @@ const fs = require('fs');
 const { ipcRenderer } = require('electron'); // Need ipcRenderer to talk to main process
 
 // State local to BITRATE operation module
-let inputVideoData = null; // To store data from ffprobe (duration, bitrate, size)
+let inputVideoData = null; // To store data from ffprobe (format and video stream)
+let currentContainerElement = null; // Store the container element reference
 
 // Function to provide the HTML for the BITRATE operation UI
 function getUIHtml() {
@@ -19,14 +20,17 @@ function getUIHtml() {
             <strong>Input Info:</strong><br>
             File Size: <span id="inputSize">N/A</span><br>
             Duration: <span id="inputDuration">N/A</span><br>
-            Overall Bitrate: <span id="inputBitrate">N/A</span>
+            Video Bitrate: <span id="inputVideoBitrate">N/A</span><br>
+            Overall Bitrate: <span id="inputOverallBitrate">N/A</span>
         </div>
+        <br>
 
         <div id="outputEstimate" class="mt-4 text-sm text-gray-700">
             <strong>Estimated Output:</strong><br>
             Estimated Size: <span id="estimatedSize">N/A</span><br>
-            Estimated Bitrate: <span id="estimatedBitrate">N/A</span>
+            Estimated Video Bitrate: <span id="estimatedVideoBitrate">N/A</span>
         </div>
+        <br>
 
         <label class="mt-4">Output File Name:</label>
         <div style="display: flex; margin-bottom: 10px;">
@@ -34,8 +38,8 @@ function getUIHtml() {
             <label style="align-content: center; padding-left: 10px;">.mp4</label>
         </div>
         <label class="flex items-center mt-2">
-            <input type="checkbox" id="useaccel" value="-hwaccel cuda" class="mr-2">
             Use Cuda HW-Acceleration:
+            <input type="checkbox" id="useaccel" value="-hwaccel cuda" class="mr-2">
         </label>
     `;
 }
@@ -43,16 +47,12 @@ function getUIHtml() {
 // Function to attach event listeners specific to the BITRATE UI
 // Needs access to the container div. It will access selectedFilePath from the outer scope.
 function attachEventListeners(containerElement, videoPreviewElement) { // videoPreviewElement is passed but not used here
+    currentContainerElement = containerElement; // Store the container element
+
     const bitrateSelect = containerElement.querySelector('#bitrateSelect');
     const crfValueSpan = containerElement.querySelector('#crfValue');
-    const inputSizeSpan = containerElement.querySelector('#inputSize');
-    const inputDurationSpan = containerElement.querySelector('#inputDuration');
-    const inputBitrateSpan = containerElement.querySelector('#inputBitrate');
-    const estimatedSizeSpan = containerElement.querySelector('#estimatedSize');
-    const estimatedBitrateSpan = containerElement.querySelector('#estimatedBitrate');
 
-
-    if (bitrateSelect && crfValueSpan && inputSizeSpan && inputDurationSpan && inputBitrateSpan && estimatedSizeSpan && estimatedBitrateSpan) {
+    if (bitrateSelect && crfValueSpan) {
         // Set initial displayed CRF value
         crfValueSpan.innerText = bitrateSelect.value;
 
@@ -60,77 +60,126 @@ function attachEventListeners(containerElement, videoPreviewElement) { // videoP
         bitrateSelect.addEventListener('input', (event) => {
             const currentCrf = event.target.value;
             crfValueSpan.innerText = currentCrf;
-            updateOutputEstimate(containerElement, currentCrf);
+            updateOutputEstimate(currentContainerElement, currentCrf); // Use stored container
         });
 
-        // --- FFprobe Data Fetching ---
-        // Access selectedFilePath directly from the outer scope (renderer.js)
-        if (selectedFilePath) {
-            console.log("BITRATE module: Requesting FFprobe data for:", selectedFilePath);
-            // Send IPC message to main process to run ffprobe
-            ipcRenderer.send('run-ffprobe', selectedFilePath);
-
-            // Listen for the ffprobe result
-            const handleFFprobeResult = (event, result) => {
-                // Remove the listener after receiving the result to avoid duplicates
-                ipcRenderer.removeListener('ffprobe-result', handleFFprobeResult);
-
-                if (result.error) {
-                    console.error("FFprobe Error:", result.error);
-                    inputSizeSpan.innerText = `Error: ${result.error}`;
-                    inputDurationSpan.innerText = 'N/A';
-                    inputBitrateSpan.innerText = 'N/A';
-                    estimatedSizeSpan.innerText = 'N/A';
-                    estimatedBitrateSpan.innerText = 'N/A';
-                    inputVideoData = null; // Clear previous data
-                } else if (result.data && result.data.format) {
-                    inputVideoData = result.data.format;
-                    console.log("FFprobe Data received:", inputVideoData); // Log received data
-
-                    // Display input info
-                    const sizeBytes = parseInt(inputVideoData.size, 10);
-                    inputSizeSpan.innerText = sizeBytes ? formatBytes(sizeBytes) : 'N/A';
-
-                    const durationSeconds = parseFloat(inputVideoData.duration);
-                    inputDurationSpan.innerText = durationSeconds ? formatDuration(durationSeconds) : 'N/A';
-
-                    const bitrateBps = parseInt(inputVideoData.bit_rate, 10);
-                     // Store bitrate in bits per second (bps)
-                    inputVideoData.bit_rate_bps = bitrateBps;
-                    inputBitrateSpan.innerText = bitrateBps ? formatBitrate(bitrateBps) : 'N/A';
-
-
-                    // Update the initial output estimate based on fetched data and default slider value
-                    updateOutputEstimate(containerElement, bitrateSelect.value);
-
-                } else {
-                    console.error("FFprobe returned unexpected data:", result);
-                     inputSizeSpan.innerText = 'Error fetching data';
-                    inputDurationSpan.innerText = 'N/A';
-                    inputBitrateSpan.innerText = 'N/A';
-                    estimatedSizeSpan.innerText = 'N/A';
-                    estimatedBitrateSpan.innerText = 'N/A';
-                    inputVideoData = null; // Clear previous data
-                }
-            };
-
-            // Attach the listener
-            ipcRenderer.on('ffprobe-result', handleFFprobeResult);
-
-        } else {
-            console.warn("BITRATE module: No selected file path to run FFprobe.");
-             inputSizeSpan.innerText = 'No file selected';
-            inputDurationSpan.innerText = 'N/A';
-            inputBitrateSpan.innerText = 'N/A';
-            estimatedSizeSpan.innerText = 'N/A';
-            estimatedBitrateSpan.innerText = 'N/A';
-            inputVideoData = null; // Clear previous data
-        }
+        // Trigger initial FFprobe data fetch
+        fetchAndDisplayFileInfo(selectedFilePath, currentContainerElement); // Access selectedFilePath from outer scope
 
     } else {
-         console.error("BITRATE module: Could not find all required UI elements to attach listeners.");
+         console.error("BITRATE module: Could not find required UI elements to attach listeners.");
     }
 }
+
+// --- FFprobe Data Fetching and Display ---
+
+// Function to fetch FFprobe data and update the UI
+function fetchAndDisplayFileInfo(filePath, containerElement) {
+    const inputSizeSpan = containerElement.querySelector('#inputSize');
+    const inputDurationSpan = containerElement.querySelector('#inputDuration');
+    const inputVideoBitrateSpan = containerElement.querySelector('#inputVideoBitrate');
+    const inputOverallBitrateSpan = containerElement.querySelector('#inputOverallBitrate');
+    const estimatedSizeSpan = containerElement.querySelector('#estimatedSize');
+    const estimatedVideoBitrateSpan = containerElement.querySelector('#estimatedVideoBitrate');
+    const bitrateSelect = containerElement.querySelector('#bitrateSelect'); // Need slider value for initial estimate
+
+    // Clear previous info and estimates
+    inputSizeSpan.innerText = 'Fetching...';
+    inputDurationSpan.innerText = 'Fetching...';
+    inputVideoBitrateSpan.innerText = 'Fetching...';
+    inputOverallBitrateSpan.innerText = 'Fetching...';
+    estimatedSizeSpan.innerText = 'N/A';
+    estimatedVideoBitrateSpan.innerText = 'N/A';
+    inputVideoData = null; // Clear previous data
+
+    if (!filePath) {
+        console.warn("BITRATE module: No file path provided for FFprobe.");
+        inputSizeSpan.innerText = 'No file selected';
+        inputDurationSpan.innerText = 'N/A';
+        inputVideoBitrateSpan.innerText = 'N/A';
+        inputOverallBitrateSpan.innerText = 'N/A';
+        estimatedSizeSpan.innerText = 'N/A';
+        estimatedVideoBitrateSpan.innerText = 'N/A';
+        return;
+    }
+
+    console.log("BITRATE module: Requesting FFprobe data for:", filePath);
+    // Send IPC message to main process to run ffprobe
+    ipcRenderer.send('run-ffprobe', filePath);
+
+    // Listen for the ffprobe result
+    // Use a unique listener function name or remove listener to avoid duplicates
+    const handleFFprobeResult = (event, result) => {
+        // Remove the listener after receiving the result
+        ipcRenderer.removeListener('ffprobe-result', handleFFprobeResult);
+
+        if (result.error) {
+            console.error("FFprobe Error:", result.error);
+            inputSizeSpan.innerText = `Error: ${result.error}`;
+            inputDurationSpan.innerText = 'N/A';
+            inputVideoBitrateSpan.innerText = 'N/A';
+            inputOverallBitrateSpan.innerText = 'N/A';
+            estimatedSizeSpan.innerText = 'N/A';
+            estimatedVideoBitrateSpan.innerText = 'N/A';
+            inputVideoData = null; // Clear previous data
+        } else if (result.data && result.data.format) {
+            inputVideoData = result.data; // Store the whole data object
+
+            // Find the video stream
+            const videoStream = inputVideoData.streams.find(stream => stream.codec_type === 'video');
+
+            console.log("FFprobe Data received:", inputVideoData); // Log received data
+            console.log("Video Stream:", videoStream); // Log video stream data
+
+            // Display input info
+            const sizeBytes = parseInt(inputVideoData.format.size, 10);
+            inputSizeSpan.innerText = sizeBytes ? formatBytes(sizeBytes) : 'N/A';
+
+            const durationSeconds = parseFloat(inputVideoData.format.duration);
+            inputDurationSpan.innerText = durationSeconds ? formatDuration(durationSeconds) : 'N/A';
+
+            const overallBitrateBps = parseInt(inputVideoData.format.bit_rate, 10);
+            inputOverallBitrateSpan.innerText = overallBitrateBps ? formatBitrate(overallBitrateBps) : 'N/A';
+
+
+            let videoBitrateBps = null;
+            if (videoStream && videoStream.bit_rate) {
+                 videoBitrateBps = parseInt(videoStream.bit_rate, 10);
+                 inputVideoBitrateSpan.innerText = formatBitrate(videoBitrateBps);
+            } else {
+                 inputVideoBitrateSpan.innerText = 'N/A (Bitrate not reported for video stream)';
+                 console.warn("FFprobe did not report bitrate for the video stream.");
+            }
+
+            // Store video bitrate and duration if available for estimation
+            if (videoBitrateBps && durationSeconds) {
+                 inputVideoData.video_bitrate_bps = videoBitrateBps;
+                 inputVideoData.duration_seconds = durationSeconds;
+                 // Update the initial output estimate based on fetched data and current slider value
+                 if(bitrateSelect) updateOutputEstimate(containerElement, bitrateSelect.value);
+            } else {
+                 console.warn("Cannot estimate output size/bitrate: Missing video bitrate or duration.");
+                 estimatedSizeSpan.innerText = 'N/A (Cannot estimate)';
+                 estimatedVideoBitrateSpan.innerText = 'N/A (Cannot estimate)';
+            }
+
+
+        } else {
+            console.error("FFprobe returned unexpected data structure:", result);
+             inputSizeSpan.innerText = 'Error fetching data';
+            inputDurationSpan.innerText = 'N/A';
+            inputVideoBitrateSpan.innerText = 'N/A';
+            inputOverallBitrateSpan.innerText = 'N/A';
+            estimatedSizeSpan.innerText = 'N/A';
+            estimatedVideoBitrateSpan.innerText = 'N/A';
+            inputVideoData = null; // Clear previous data
+        }
+    };
+
+    // Attach the listener
+    ipcRenderer.on('ffprobe-result', handleFFprobeResult);
+}
+
 
 // Helper function to format bytes into a human-readable string
 function formatBytes(bytes, decimals = 2) {
@@ -163,80 +212,79 @@ function formatBitrate(bps, decimals = 2) {
 
 // --- Estimation Logic ---
 
-// Function to estimate output bitrate based on input bitrate and CRF
-// This is a simplified estimation and will not be perfectly accurate.
-function estimateOutputBitrate(inputBitrateBps, durationSeconds, crf) {
-    if (!inputBitrateBps || !durationSeconds) {
-        return null; // Cannot estimate without input data
+// Function to estimate output video bitrate based on input video bitrate and CRF
+// This is a simplified exponential model based on general x264 behavior.
+// It's an approximation and accuracy will vary.
+function estimateOutputVideoBitrate(inputVideoBitrateBps, crf) {
+    if (!inputVideoBitrateBps) {
+        return null; // Cannot estimate without input video bitrate
     }
 
-    // --- Simplified Estimation Model ---
-    // This model is based on general observations and is NOT a precise formula.
-    // It assumes a relationship between CRF and bitrate reduction relative to a baseline.
-    // A typical "good quality" might be around CRF 23.
-    // Let's assume a baseline bitrate ratio at CRF 23 (e.g., 50% of original, or a fixed value).
-    // A simpler approach is to model the bitrate as decreasing exponentially with increasing CRF.
-    // Bitrate(CRF) = BaseBitrate * exp(-k * CRF)
-    // We need to pick a BaseBitrate and k. This is highly empirical.
-    // Let's try a simpler linear scaling relative to the input bitrate,
-    // with some assumptions about the range.
-    // Assume CRF 0 is ~100% of original (or higher if lossless)
-    // Assume CRF 51 is a very low percentage (e.g., 5-10%)
-    // Assume CRF 23 is somewhere in the middle (e.g., 30-60%)
+    // --- Exponential Estimation Model (Revised based on new data) ---
+    // Model: Estimated Bitrate Ratio = A * exp(-k * CRF)
+    // Aiming for a better fit across observed points:
+    // CRF 0: Ratio ~10x (your data) => A = 10.0
+    // CRF 20: Ratio ~0.9x (your data)
+    // Using A=10.0, solve for k at CRF 20, Ratio 0.9:
+    // 0.9 = 10.0 * exp(-k * 20)
+    // 0.09 = exp(-k * 20)
+    // ln(0.09) = -k * 20
+    // k = -ln(0.09) / 20 ≈ 0.1204
 
-    // Let's use a simplified inverse linear relationship for demonstration:
-    // Estimated Bitrate Ratio = (MaxCRF - CRF) / MaxCRF * (MaxRatio - MinRatio) + MinRatio
-    // Where MaxCRF = 51, MaxRatio (at CRF 0) = 1.0 (or more), MinRatio (at CRF 51) = 0.05
-    // Let's use MaxRatio = 1.2 (assuming CRF 0 can be slightly higher than original) and MinRatio = 0.05
-
-    const maxCrf = 51;
-    const maxRatio = 1.2; // Estimated bitrate ratio at CRF 0
-    const minRatio = 0.05; // Estimated bitrate ratio at CRF 51
+    const A = 10.0; // Estimated ratio at CRF 0 (based on your data)
+    const k = 0.1204; // Decay factor (calculated to fit CRF 20 data)
 
     // Ensure CRF is within bounds
-    const clampedCrf = Math.max(0, Math.min(maxCrf, crf));
+    const clampedCrf = Math.max(0, Math.min(51, crf));
 
-    // Calculate the ratio based on the clamped CRF
-    const bitrateRatio = ((maxCrf - clampedCrf) / maxCrf) * (maxRatio - minRatio) + minRatio;
+    // Calculate the estimated ratio
+    const bitrateRatio = A * Math.exp(-k * clampedCrf);
 
-    // Estimated output bitrate
-    const estimatedBitrate = inputBitrateBps * bitrateRatio;
+    // Estimated output video bitrate
+    const estimatedBitrate = inputVideoBitrateBps * bitrateRatio;
 
-    // Ensure estimated bitrate is not negative or zero (shouldn't happen with this model, but as a safeguard)
-    return Math.max(1, estimatedBitrate); // Minimum 1 bps to avoid division by zero or zero size
+    // Ensure estimated bitrate is not negative or zero
+    return Math.max(1, estimatedBitrate); // Minimum 1 bps
 }
 
 
 // Function to update the estimated output size and bitrate display
 function updateOutputEstimate(containerElement, currentCrf) {
     const estimatedSizeSpan = containerElement.querySelector('#estimatedSize');
-    const estimatedBitrateSpan = containerElement.querySelector('#estimatedBitrate');
+    const estimatedVideoBitrateSpan = containerElement.querySelector('#estimatedVideoBitrate');
 
-    if (!estimatedSizeSpan || !estimatedBitrateSpan) {
+    if (!estimatedSizeSpan || !estimatedVideoBitrateSpan) {
          console.error("BITRATE module: Could not find estimated output UI elements.");
         return;
     }
 
-    if (inputVideoData && inputVideoData.bit_rate_bps && inputVideoData.duration) {
-        const inputBitrateBps = inputVideoData.bit_rate_bps;
-        const durationSeconds = parseFloat(inputVideoData.duration);
+    // Use the stored video bitrate and duration for estimation
+    if (inputVideoData && inputVideoData.video_bitrate_bps && inputVideoData.duration_seconds) {
+        const inputVideoBitrateBps = inputVideoData.video_bitrate_bps;
+        const durationSeconds = inputVideoData.duration_seconds;
 
-        const estimatedBitrateBps = estimateOutputBitrate(inputBitrateBps, durationSeconds, parseInt(currentCrf, 10));
+        const estimatedVideoBitrateBps = estimateOutputVideoBitrate(inputVideoBitrateBps, parseInt(currentCrf, 10));
 
-        if (estimatedBitrateBps !== null) {
-            // Estimated size = Estimated Bitrate (bps) * Duration (s) / 8 (bits to bytes)
-            const estimatedSizeBytes = (estimatedBitrateBps * durationSeconds) / 8;
+        if (estimatedVideoBitrateBps !== null) {
+            // Estimated size = Estimated Overall Bitrate (bps) * Duration (s) / 8 (bits to bytes)
+            // To estimate overall bitrate, we add the original non-video bitrate to the estimated video bitrate.
+            // This assumes the non-video bitrate (audio, metadata) remains roughly constant.
+            const nonVideoBitrateBps = (inputVideoData.format.bit_rate || 0) - (inputVideoData.video_bitrate_bps || 0);
+            const estimatedOverallBitrateBps = estimatedVideoBitrateBps + nonVideoBitrateBps; // Add non-video bitrate back
 
-            estimatedBitrateSpan.innerText = formatBitrate(estimatedBitrateBps);
+            const estimatedSizeBytes = (estimatedOverallBitrateBps * durationSeconds) / 8;
+
+
+            estimatedVideoBitrateSpan.innerText = formatBitrate(estimatedVideoBitrateBps);
             estimatedSizeSpan.innerText = formatBytes(estimatedSizeBytes);
         } else {
-             estimatedBitrateSpan.innerText = 'N/A';
+             estimatedVideoBitrateSpan.innerText = 'N/A';
              estimatedSizeSpan.innerText = 'N/A';
         }
 
     } else {
         // Input data not available yet or error occurred
-        estimatedBitrateSpan.innerText = 'N/A';
+        estimatedVideoBitrateSpan.innerText = 'N/A';
         estimatedSizeSpan.innerText = 'N/A';
     }
 }
@@ -283,9 +331,19 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
     return { command: ffmpegCommand, outputFile: outputFile }; // Return command and output file name
 }
 
+// Function to handle file change notification from renderer.js
+// This function is called by renderer.js when the main input file changes.
+function handleFileChange(newFilePath, containerElement) {
+    console.log("BITRATE module: Received file change notification:", newFilePath);
+    // Trigger FFprobe data fetch and UI update with the new file path
+    fetchAndDisplayFileInfo(newFilePath, containerElement);
+}
+
+
 // Export the functions
 module.exports = {
     getUIHtml,
     attachEventListeners,
-    getFFmpegCommand
+    getFFmpegCommand,
+    handleFileChange // Export the new handler
 };

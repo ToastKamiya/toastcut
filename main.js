@@ -91,7 +91,7 @@ ipcMain.on('run-ffprobe', (event, filePath) => {
     }
 
     // Use ffprobePath from ffprobe-static
-    const command = `"${ffprobePath}" -v quiet -print_format json -show_format -show_streams "${filePath}"`;
+    const command = `"${ffprobePath}" -v quiet -print_format json -show_format -select_streams v:0 -show_streams "${filePath}"`;
     console.log(`Executing ffprobe command: ${command}`); // Log the ffprobe command
 
     exec(command, (error, stdout, stderr) => {
