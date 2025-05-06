@@ -16,6 +16,9 @@ let selectedFilePath = null; // Path of the first selected video file
 let secondFilePath = null; // Path of the second video file (for concatenate)
 let tempConcatFilePath = null; // Variable to store the temporary file path for concatenation
 
+// Keep track of the currently loaded operation module
+let currentOperationModule = null;
+
 // --- Event Listeners ---
 
 // Listen for file selection in the input element
@@ -25,11 +28,19 @@ if (inputFile) {
         if (file) {
             selectedFilePath = webUtils.getPathForFile(file);
             loadVideo(file);
+            // Notify the current operation module about the file change
+            if (currentOperationModule && typeof currentOperationModule.handleFileChange === 'function') {
+                currentOperationModule.handleFileChange(selectedFilePath, operationDetailsDiv); // Pass file path and container
+            }
         } else {
             selectedFilePath = null;
             if (videoPreview) {
                 videoPreview.style.display = 'none';
             }
+             // Notify the current operation module that the file was cleared
+             if (currentOperationModule && typeof currentOperationModule.handleFileChange === 'function') {
+                 currentOperationModule.handleFileChange(null, operationDetailsDiv); // Pass null for cleared file
+             }
         }
     });
 }
@@ -67,7 +78,7 @@ function loadVideo(file) {
     videoPreview.load();
 }
 
-// Handle file selection for the second video in concatenation
+// Handle file selection for the second video in concatenation (called by concatenate.js)
 function handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
@@ -102,7 +113,11 @@ function updateOperationUI() {
     const operation = operationSelect.value;
     operationDetailsDiv.innerHTML = '';
 
-    deleteTempConcatFile();
+    // Reset the current operation module when changing operations
+    currentOperationModule = null;
+
+    // Reset temporary file path when operation changes
+    deleteTempConcatFile(); // Keep this if you still have the concatenate logic
 
     if (!operation) {
         runButton.disabled = true;
@@ -111,9 +126,13 @@ function updateOperationUI() {
 
     try {
         const operationModule = require(`./operations/${operation.toLowerCase()}`);
+        currentOperationModule = operationModule; // Store the loaded module
+
         operationDetailsDiv.innerHTML = operationModule.getUIHtml();
 
         if (typeof operationModule.attachEventListeners === 'function') {
+             // Pass operationDetailsDiv and videoPreview
+             // The bitrate module will access selectedFilePath from the outer scope
              operationModule.attachEventListeners(operationDetailsDiv, videoPreview);
         }
 
@@ -140,13 +159,16 @@ async function runFFMPEG() {
         return;
     }
 
+    // Ensure any previous temporary file is cleaned up before starting a new operation
     deleteTempConcatFile();
 
     let commandResult;
     let operationModule;
 
     try {
-        operationModule = require(`./operations/${operation.toLowerCase()}`);
+        // Use the currentOperationModule if available, otherwise require it
+        operationModule = currentOperationModule || require(`./operations/${operation.toLowerCase()}`);
+
         commandResult = operationModule.getFFmpegCommand(selectedFilePath, operationDetailsDiv, secondFilePath);
 
         if (!commandResult || !commandResult.command || !commandResult.outputFile) {
@@ -155,16 +177,16 @@ async function runFFMPEG() {
             return;
         }
 
+        // Store the temporary file path if the operation is CONCATENATE
+        if (operation.toLowerCase() === 'concatenate' && commandResult.tempFilePath) {
+            tempConcatFilePath = commandResult.tempFilePath;
+        }
+
     } catch (error) {
         console.error(`Failed to get FFMPEG command for "${operation}":`, error);
         outputElement.innerText = `❌ Error preparing command: ${error.message}`;
         runButton.disabled = false;
         return;
-    }
-
-        // Store the temporary file path if the operation is CONCATENATE
-    if (operation.toLowerCase() === 'concatenate' && commandResult.tempFilePath) {
-        tempConcatFilePath = commandResult.tempFilePath;
     }
 
     const outputFile = commandResult.outputFile;
@@ -192,6 +214,7 @@ async function runFFMPEG() {
 ipcRenderer.on('ffmpeg-progress', (event, message) => {
     if (outputElement) {
        outputElement.innerText = 'Processing...';
+       // Progress parsing logic can be added here if needed, using progressElement
     }
 });
 
@@ -199,8 +222,9 @@ ipcRenderer.on('ffmpeg-progress', (event, message) => {
 ipcRenderer.on('ffmpeg-success', (event, message) => {
     if (outputElement) {
         outputElement.innerText = `✅ Success:\n${message}`;
-        deleteTempConcatFile();
         if (runButton) runButton.disabled = false;
+        // Delete the temporary file after success
+        deleteTempConcatFile();
     }
 });
 
@@ -208,8 +232,9 @@ ipcRenderer.on('ffmpeg-success', (event, message) => {
 ipcRenderer.on('ffmpeg-error', (event, message) => {
     if (outputElement) {
         outputElement.innerText = `❌ Error:\n${message}`;
-        deleteTempConcatFile();
         if (runButton) runButton.disabled = false;
+        // Delete the temporary file even if there's an error
+        deleteTempConcatFile();
     }
 });
 
