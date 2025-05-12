@@ -13,10 +13,11 @@ app.whenReady().then(() => {
     height: 1000,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false, // Keep false for now based on your previous code
-      enableRemoteModule: true, // Keep true for now based on your previous code
+      contextIsolation: false, 
+      enableRemoteModule: true, 
     },
   });
+  mainWindow.removeMenu()
 
   // Load your index.html file
   // Assuming index.html is in the same directory as main.js

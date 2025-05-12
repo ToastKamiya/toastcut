@@ -3,46 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ToastCut V1.0.3</title>
   <link rel="stylesheet" href="./assets/style.css">
-  <title>ToastCut</title>
 </head>
 <body>
-  <h1>ToastCut</h1>
-  <h3>Powered by FFMPEG and Electron</h3>
-  <hr>
-  <div>
-  <label for="inputFile">Input Video File:</label>
-  <input type="file" id="inputFile" accept="video/*">
-  </div>
-  <div>
-    <video id="videoPreview" controls style="width: 400px; height: 225px; margin-top: 20px;">
-      Your browser does not support the video tag.
-    </video>
-  </div>
-  <br>
-  <hr>
+ <div class="content-wrapper">
+    <h1>ToastCut</h1>
+    <h3>Powered by FFMPEG and Electron</h3>
 
-  <div class="section">
-    <label for="operation">Select Operation:</label>
-    <select id="operation">
-      <option value="" disabled selected>Select your option</option>
-      <option value="TRIM">Trim</option>
-      <option value="CONCATENATE">Concatenate</option>
-      <option value="CROP">Crop</option>
-      <option value="VFRtoCFR">VFR to CFR</option>
-      <option value="MERGEAUDIO">Merge Audio</option>
-      <option value="BITRATE">Compress</option>
-    </select>
-  </div>
+    <div class="card">
+        <div class="file-input-container">
+            <label for="inputFile" class="file-input-label">
+                <span>Click or Drag Video File Here</span>
+            </label>
+            <input type="file" id="inputFile" accept="video/*">
+        </div>
+        <div id="file-name-card">No file selected</div>
 
-  <div id="operationDetails" class="section"></div>
+        <video id="videoPreview" controls style="width: 400px; height: 225px;">
+            Your browser does not support the video tag.
+        </video>
+    </div>
 
-  <button class="runbtn" id="runButton">Run FFMPEG</button>
-  <div></div>
-  <br>
-  <div id="progress" style="margin-top: 20px; color: green;"></div>
-  <div id="output"></div>
+    <div class="card">
+        <label for="operation">Select Operation:</label>
 
+        <select id="operation" style="display: none;">
+            <option value="" disabled selected>Select your option</option>
+            <option value="TRIM">Trim</option>
+            <option value="CONCATENATE">Concatenate</option>
+            <option value="CROP">Crop</option>
+            <option value="VFRtoCFR">VFR to CFR</option>
+            <option value="MERGEAUDIO">Merge Audio</option>
+            <option value="BITRATE">Compress</option>
+        </select>
+
+        <div id="operation-carousel">
+            </div>
+
+        <div id="operationDetails" style="margin-top: 20px;"> </div>
+    </div>
+
+    <div class="card"> <div class="run-button-container">
+            <button class="runbtn" id="runButton">Start Editing</button>
+        </div>
+
+        <div id="progress"></div>
+        <div id="output"></div>
+    </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectElement = document.getElementById('operation');
+        const carouselElement = document.getElementById('operation-carousel');
+        const operationDetailsElement = document.getElementById('operationDetails'); // Get operationDetails div
+        const inputFileElement = document.getElementById('inputFile'); // Get the file input
+        const fileNameCardElement = document.getElementById('file-name-card'); // Get the file name display div
+
+
+        // Function to render carousel items based on select options
+        function renderCarousel() {
+            carouselElement.innerHTML = '';
+
+            // Start from index 1 to skip the "Select your option" placeholder
+            for (let i = 1; i < selectElement.options.length; i++) {
+                const option = selectElement.options[i];
+                const item = document.createElement('span');
+                item.classList.add('operation-item');
+                item.textContent = option.text;
+                item.dataset.value = option.value; // Store the value
+
+                // Add click listener
+                item.addEventListener('click', () => {
+                    // Remove 'selected' class from all items
+                    carouselElement.querySelectorAll('.operation-item').forEach(op => {
+                        op.classList.remove('selected');
+                    });
+
+                    // Add 'selected' class to the clicked item
+                    item.classList.add('selected');
+
+                    // Update the hidden select's value
+                    selectElement.value = item.dataset.value;
+
+                    // Manually dispatch a 'change' event on the hidden select
+                    const changeEvent = new Event('change', { bubbles: true });
+                    selectElement.dispatchEvent(changeEvent);
+
+                    // Scroll the operationDetails div into view smoothly
+                    operationDetailsElement.scrollIntoView({
+                        behavior: 'smooth', // Use smooth scrolling
+                        block: 'start'     // Align the top of the element to the top of the viewport
+                    });
+
+                    // Clearing operationDetails is now handled by the fade-out in renderer.js
+                });
+
+                carouselElement.appendChild(item);
+            }
+        }
+        // --- File Input Change Listener ---
+        // Add a listener to the actual file input to display the selected file name
+        inputFileElement.addEventListener('change', () => {
+            if (inputFileElement.files.length > 0) {
+                fileNameCardElement.textContent = inputFileElement.files[0].name;
+            } else {
+                fileNameCardElement.textContent = 'No file selected';
+            }
+        });
+
+        // Initial render of the carousel
+        renderCarousel();
+
+        // --- Auto-select the first option ('TRIM') on page load ---
+        // Use a small timeout to ensure carousel items are rendered before attempting to select
+        setTimeout(() => {
+             const firstOptionValue = 'TRIM'; // Value of the first actual option
+             const firstCarouselItem = carouselElement.querySelector(`.operation-item[data-value="${firstOptionValue}"]`);
+
+             if (firstCarouselItem) {
+                 // Visually select the item
+                 firstCarouselItem.classList.add('selected');
+
+                 // Update the hidden select's value
+                 selectElement.value = firstOptionValue;
+
+                 // Dispatch a change event on the hidden select
+                 const initialChangeEvent = new Event('change', { bubbles: true });
+                 selectElement.dispatchEvent(initialChangeEvent);
+             }
+        }, 50); // Small delay to ensure items are in DOM
+
+
+    }); // End of DOMContentLoaded listener
+  </script>
   <script src="./renderer.js"></script>
 </body>
 </html>

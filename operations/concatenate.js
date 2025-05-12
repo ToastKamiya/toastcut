@@ -7,9 +7,12 @@ let secondFilePath = null; // State local to CONCATENATE operation
 
 function getUIHtml() {
     return `
-        <p>First video: <strong>(already selected above)</strong></p>
-        <label>Choose Second Video:</label>
+        <p>First video - <strong>(already selected above)</strong></p>
+        <br/>
+        <p>Second video:</p>
+        <label for="secondVideoFile" class="file-input-label">
         <input type="file" id="secondVideoFile" accept="video/mp4">
+        </label>
         <label>Output File Name:</label>
         <div style="display: flex;">
             <input type="text" id="outputFileName">
