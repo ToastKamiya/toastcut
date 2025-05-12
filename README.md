@@ -31,22 +31,22 @@ Documentation on exact app usage instructions is in development. Here's a summar
 
 # Building
 Follow the steps below to install the program and dependencies:
-1. Install Node.js (LTS) (https://nodejs.org)
-2. Install FFmpeg (https://www.ffmpeg.org/)
-3. Clone the repository:
+1. Install Node.js (v14 or newer, v18 recommended) (https://nodejs.org)
+3. Install FFmpeg (https://www.ffmpeg.org/)
+4. Clone the repository:
    ```
    git clone https://github.com/ToastKamiya/toastcut.git
    cd toastcut
-4. Install dependencies:
+5. Install dependencies:
    ```
    npm install
-5. If not installed already, install electron-builder to build the app
+6. If not installed already, install electron-builder to build the app
    ```
    npm install -g electron-builder
-6. Test the app in debug mode
+7. Test the app in debug mode
    ```
    npm run start
-7. Build the app executables
+8. Build the app executables
    ```
    npm run build
 # License
