@@ -10,20 +10,19 @@ function getUIHtml() {
             <input type="text" style="margin-right: 10px;" id="startTime" value="00:00:00">
             <input class="btn1" type="button" value="Apply timestamp">
         </div>
+        <br/>
         <label>End Time (HH:MM:SS):</label>
         <div style="display: flex;">
             <input type="text" style="margin-right: 10px;" id="endTime" value="00:00:00">
             <input class="btn2" type="button" value="Apply timestamp">
         </div>
+        <br/>
         <label>Output File Name:</label>
         <div style="display: flex;">
             <input type="text" id="outputFileName">
             <label style="align-content: center;">.mp4</label>
         </div>
-        <label class="flex items-center">
-            Use Cuda HW-Acceleration:
-            <input type="checkbox" id="useaccel" value="-hwaccel cuda" class="mr-2">
-        </label>
+        <br/>
     `;
 }
 

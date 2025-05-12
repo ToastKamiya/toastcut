@@ -108,40 +108,94 @@ function deleteTempConcatFile() {
 
 // Update the UI based on the selected operation
 function updateOperationUI() {
+    // Ensure the required elements exist
     if (!operationDetailsDiv || !runButton || !operationSelect) return;
 
     const operation = operationSelect.value;
-    operationDetailsDiv.innerHTML = '';
 
-    // Reset the current operation module when changing operations
-    currentOperationModule = null;
+    // --- Start Fade Out ---
+    // Set opacity to 0 to begin the fade out transition of the current content.
+    // The CSS transition will handle the animation.
+    operationDetailsDiv.style.opacity = '0';
+    // --- End Fade Out ---
 
-    // Reset temporary file path when operation changes
-    deleteTempConcatFile(); // Keep this if you still have the concatenate logic
+    // Use a small timeout (or requestAnimationFrame, but setTimeout can be simpler
+    // when clearing innerHTML right after) to wait for the fade out to start
+    // before clearing the content and fading in the new stuff.
+    // The duration below (200ms) should ideally be less than or equal to the CSS transition duration (0.5s = 500ms).
+    const fadeDelay = 200; // Adjust delay if needed
 
-    if (!operation) {
-        runButton.disabled = true;
-        return;
-    }
+    setTimeout(() => {
+        // Clear the content *after* the fade out has had time to start
+        operationDetailsDiv.innerHTML = '';
 
-    try {
-        const operationModule = require(`./operations/${operation.toLowerCase()}`);
-        currentOperationModule = operationModule; // Store the loaded module
+        // Reset the current operation module when changing operations
+        currentOperationModule = null;
 
-        operationDetailsDiv.innerHTML = operationModule.getUIHtml();
-
-        if (typeof operationModule.attachEventListeners === 'function') {
-             // Pass operationDetailsDiv and videoPreview
-             // The bitrate module will access selectedFilePath from the outer scope
-             operationModule.attachEventListeners(operationDetailsDiv, videoPreview);
+        // Reset temporary file path when operation changes
+        // Keep this if you still have the concatenate logic
+        if (typeof deleteTempConcatFile === 'function') {
+             deleteTempConcatFile();
         }
 
-        runButton.disabled = false;
-    } catch (error) {
-        console.error(`Failed to load or initialize operation module for "${operation}":`, error);
-        operationDetailsDiv.innerHTML = `<p style="color: red;">Error loading operation UI. Check console for details.</p>`;
-        runButton.disabled = true;
-    }
+
+        if (!operation) {
+            runButton.disabled = true;
+            // If no operation is selected, the div is already at opacity 0, just return.
+            return;
+        }
+
+        try {
+            // Require and store the new operation module
+            const operationModule = require(`./operations/${operation.toLowerCase()}`);
+            currentOperationModule = operationModule;
+
+            // --- Insert New Content ---
+            // Insert the new HTML content into the div
+            operationDetailsDiv.innerHTML = operationModule.getUIHtml();
+            // --- End Insert New Content ---
+
+
+            // Attach event listeners for the new UI elements
+            if (typeof operationModule.attachEventListeners === 'function') {
+                // Pass operationDetailsDiv and videoPreview
+                // The bitrate module will access selectedFilePath from the outer scope
+                operationModule.attachEventListeners(operationDetailsDiv, videoPreview);
+            }
+
+            // Enable the run button now that UI is loaded (assuming attachEventListeners doesn't disable it)
+            runButton.disabled = false;
+
+
+            // --- Start Fade In ---
+            // After inserting the new content, use requestAnimationFrame to
+            // wait for the browser to be ready to render the new state.
+            // Then set opacity to 1 to trigger the fade-in transition.
+            requestAnimationFrame(() => {
+                // A second requestAnimationFrame can sometimes help ensure the transition is registered
+                requestAnimationFrame(() => {
+                    operationDetailsDiv.style.opacity = '1'; // Trigger fade in transition
+                });
+            });
+            // --- End Fade In ---
+
+
+        } catch (error) {
+            console.error(`Failed to load or initialize operation module for "${operation}":`, error);
+            // Display an error message
+            operationDetailsDiv.innerHTML = `<p style="color: red;">Error loading operation UI. Check console for details.</p>`;
+            runButton.disabled = true;
+
+            // --- Fade In Error Message ---
+            // Also fade in the error message itself
+             requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    operationDetailsDiv.style.opacity = '1';
+                });
+            });
+            // --- End Fade In Error Message ---
+        }
+    }, fadeDelay); // End of setTimeout
 }
 
 // Run the FFMPEG process based on the selected operation and inputs

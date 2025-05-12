@@ -314,12 +314,6 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
     let usecuda = '';
     if (cudaBox && cudaBox.checked) {
         usecuda = "-hwaccel cuda";
-        // Note: Using -hwaccel cuda with libx264 might not be the most efficient way
-        // to use hardware acceleration for encoding. You might need to use a different
-        // encoder like h264_nvenc if CUDA is available and you want hardware encoding.
-        // The current command uses libx264 which is a CPU-based encoder by default.
-        // If you intend hardware encoding, the command needs to be adjusted.
-         console.warn("BITRATE module: CUDA acceleration checkbox selected, but command uses libx264 (CPU encoder). Consider using a hardware encoder like h264_nvenc if available.");
     }
 
     // Construct the FFMPEG command
