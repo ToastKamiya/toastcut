@@ -119,9 +119,6 @@ function updateOperationUI() {
     operationDetailsDiv.style.opacity = '0';
     // --- End Fade Out ---
 
-    // Use a small timeout (or requestAnimationFrame, but setTimeout can be simpler
-    // when clearing innerHTML right after) to wait for the fade out to start
-    // before clearing the content and fading in the new stuff.
     // The duration below (200ms) should ideally be less than or equal to the CSS transition duration (0.5s = 500ms).
     const fadeDelay = 200; // Adjust delay if needed
 
