@@ -15,20 +15,22 @@ function getUIHtml() {
             <input type="range" min="0" max="51" value="23" class="slider w-full" id="bitrateSelect">
         </div>
         <p class="text-sm text-gray-600 mt-1">Lower CRF means higher quality and larger file size (0 is lossless, ~23 is default, 51 is worst quality).</p>
+        <br/>
+        <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <div id="inputInfo" class="mt-4 text-sm text-gray-700" style="flex: 1;">
+                <strong>Input Info:</strong><br>
+                File Size: <span id="inputSize">N/A</span><br>
+                Duration: <span id="inputDuration">N/A</span><br>
+                Video Bitrate: <span id="inputVideoBitrate">N/A</span><br>
+                Overall Bitrate: <span id="inputOverallBitrate">N/A</span>
+            </div>
+            <br>
 
-        <div id="inputInfo" class="mt-4 text-sm text-gray-700">
-            <strong>Input Info:</strong><br>
-            File Size: <span id="inputSize">N/A</span><br>
-            Duration: <span id="inputDuration">N/A</span><br>
-            Video Bitrate: <span id="inputVideoBitrate">N/A</span><br>
-            Overall Bitrate: <span id="inputOverallBitrate">N/A</span>
-        </div>
-        <br>
-
-        <div id="outputEstimate" class="mt-4 text-sm text-gray-700">
-            <strong>Estimated Output:</strong><br>
-            Estimated Size: <span id="estimatedSize">N/A</span><br>
-            Estimated Video Bitrate: <span id="estimatedVideoBitrate">N/A</span>
+            <div id="outputEstimate" class="mt-4 text-sm text-gray-700" style="flex: 1;">
+                <strong>Estimated Output:</strong><br>
+                Estimated Size: <span id="estimatedSize">N/A</span><br>
+                Estimated Video Bitrate: <span id="estimatedVideoBitrate">N/A</span>
+            </div>
         </div>
         <br>
 
