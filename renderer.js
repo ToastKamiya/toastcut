@@ -240,9 +240,41 @@ async function runFFMPEG() {
         return;
     }
 
-    const outputFile = commandResult.outputFile;
-    const ffmpegCommand = commandResult.command;
-    const fullOutputPath = path.resolve(outputFile);
+    let outputFile = commandResult.outputFile;
+    let ffmpegCommand = commandResult.command;
+    let fullOutputPath = path.resolve(outputFile);
+
+    // Check if user wants to choose save location
+    const askSaveCheckbox = document.getElementById('askSaveLocation');
+    const askSave = askSaveCheckbox && askSaveCheckbox.checked;
+
+    if (askSave) {
+        try {
+            const result = await ipcRenderer.invoke('show-save-dialog', {
+                title: 'Save processed video as…',
+                defaultPath: outputFile,
+                filters: [{ name: 'Video files', extensions: ['mp4', 'mkv', 'mov'] }]
+            });
+
+            if (result.canceled || !result.filePath) {
+                outputElement.innerText = 'Operation cancelled by user.';
+                runButton.disabled = false;
+                return;
+            }
+
+            // Replace the output file in the command
+            outputFile = result.filePath;
+            fullOutputPath = outputFile;
+
+            ffmpegCommand = ffmpegCommand.replace(commandResult.outputFile, outputFile);
+
+        } catch (dialogError) {
+            console.error('Save dialog error:', dialogError);
+            outputElement.innerText = '❌ Failed to open save dialog.';
+            runButton.disabled = false;
+            return;
+        }
+    }
 
     if (fs.existsSync(fullOutputPath)) {
         const overwrite = confirm(`File "${outputFile}" already exists. Overwrite?`);

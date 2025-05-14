@@ -40,15 +40,20 @@
         </select>
 
         <div id="operation-carousel-wrapper">
-  <div id="operation-carousel">
-  </div>
-</div>
+          <div id="operation-carousel">
+          </div>
+        </div>
 
         <div id="operationDetails" style="margin-top: 20px;"> </div>
     </div>
 
     <div class="card"> <div class="run-button-container">
             <button class="runbtn" id="runButton">Run FFmpeg</button>
+            <label class="toggle-container">
+                <br/>
+          <input type="checkbox" id="askSaveLocation" />
+          Manually select output location
+        </label>
         </div>
 
         <div id="progress"></div>

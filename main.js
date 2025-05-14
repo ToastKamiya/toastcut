@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
 const ffprobePath = require('ffprobe-static').path; // Use ffprobe-static to get ffprobe path
@@ -30,6 +30,10 @@ app.whenReady().then(() => {
   });
 });
 
+// A handler that renderer can invoke
+ipcMain.handle('show-save-dialog', async (event, options) => {
+  return await dialog.showSaveDialog(options);
+});
 
 // Listen for the terminate-ffmpeg message to terminate the process from the renderer
 ipcMain.on('terminate-ffmpeg', () => {

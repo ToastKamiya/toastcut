@@ -72,6 +72,51 @@ h3 {
   color:grey !important;
 }
 
+/* Container label for toggle */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+/* Hide default checkbox */
+.toggle-container input[type="checkbox"] {
+  appearance: none;
+  width: 42px;
+  height: 24px;
+  background-color: #e74c3c; /* red when off */
+  border-radius: 50px;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Slider knob */
+.toggle-container input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: left 0.3s ease;
+}
+
+/* Checked state (green background, slider right) */
+.toggle-container input[type="checkbox"]:checked {
+  background-color: #2ecc71;
+}
+
+.toggle-container input[type="checkbox"]:checked::before {
+  left: 20px;
+}
+
 /* Card Styling */
 .card {
     background-color: var(--color-bg-card);
@@ -326,6 +371,12 @@ label {
 .run-button-container {
     text-align: center;
     margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers all children horizontally */
+    justify-content: center;
+    gap: 10px; /* Optional spacing between elements */
+    padding: 10px;
 }
 
 /* Selected Item / Run Button Style */
