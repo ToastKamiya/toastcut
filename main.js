@@ -20,7 +20,6 @@ app.whenReady().then(() => {
   mainWindow.removeMenu()
 
   // Load your index.html file
-  // Assuming index.html is in the same directory as main.js
   mainWindow.loadFile('index.html');
 
   mainWindow.on('close', () => {

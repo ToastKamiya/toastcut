@@ -67,6 +67,11 @@ h3 {
   text-align: center;
 }
 
+.hiddenButton{
+  border:none !important;
+  color:grey !important;
+}
+
 /* Card Styling */
 .card {
     background-color: var(--color-bg-card);
