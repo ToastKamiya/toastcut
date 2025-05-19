@@ -1,7 +1,11 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
-const ffprobePath = require('ffprobe-static').path; // Use ffprobe-static to get ffprobe path
+const ffprobeStatic = require('ffprobe-static');
+
+const ffprobePath = app.isPackaged
+  ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'ffprobe-static', 'bin', 'win32', 'x64', 'ffprobe.exe')
+  : ffprobeStatic.path;
 
 let ffmpegProcess = null;
 let mainWindow;

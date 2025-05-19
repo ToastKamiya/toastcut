@@ -21,6 +21,9 @@
       "assets/**/*",
       "operations/*"
     ],
+    "asarUnpack": [
+    "node_modules/ffprobe-static/**"
+    ],
     "extraResources": [
       {
         "from": "assets/",
@@ -31,7 +34,7 @@
       "target": "dmg"
     },
     "win": {
-      "target": "nsis"
+      "target": "portable"
     },
     "linux": {
       "target": "AppImage"
