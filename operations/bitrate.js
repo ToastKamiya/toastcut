@@ -39,7 +39,7 @@ function getUIHtml() {
             <input type="text" id="outputFileName" class="border p-2 rounded w-full">
             <label style="align-content: center; padding-left: 10px;">.mp4</label>
         </div>
-        <label class="flex items-center mt-2">
+        <label class="flex items-center">
             Use Cuda HW-Acceleration:
             <input type="checkbox" id="useaccel" value="-hwaccel cuda" class="mr-2">
         </label>

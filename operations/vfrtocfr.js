@@ -31,6 +31,7 @@ function attachEventListeners(containerElement, videoPreviewElement) {
 function getFFmpegCommand(selectedFilePath, containerElement) {
     const framerateInput = containerElement.querySelector('#framerateSelect');
     const outputFileNameInput = containerElement.querySelector('#outputFileName');
+    const cudaBox = containerElement.querySelector('#useaccel');
 
      if (!framerateInput || !outputFileNameInput) {
          console.error("VFRtoCFR module: Could not find all required input elements.");
