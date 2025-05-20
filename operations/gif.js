@@ -153,7 +153,7 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
     // Construct the FFMPEG command
     const outputFile = outputFileName + ".gif";
     // Ensure paths are quoted to handle spaces
-    const ffmpegCommand = `ffmpeg -y -ss ${startTime} -t ${duration} -i "${selectedFilePath}" -vf "${vfFilter}" -loop ${loopCount} "${outputFile}"`;
+    const ffmpegCommand = `-y -ss ${startTime} -t ${duration} -i "${selectedFilePath}" -vf "${vfFilter}" -loop ${loopCount} "${outputFile}"`;
 
     return { command: ffmpegCommand, outputFile: outputFile }; // Return command and output file name
 }

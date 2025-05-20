@@ -1,16 +1,51 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
-const ffprobeStatic = require('ffprobe-static');
-
-const ffprobePath = app.isPackaged
-  ? path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'ffprobe-static', 'bin', 'win32', 'x64', 'ffprobe.exe')
-  : ffprobeStatic.path;
+const fs = require('fs'); // fs for checking existence
 
 let ffmpegProcess = null;
 let mainWindow;
 
+// Determine the correct path to FFmpeg and FFprobe
+const getBinaryPath = (binaryName) => {
+  let executablePath;
+
+  if (app.isPackaged) {
+    // In a packaged app, use process.resourcesPath which points to 'YourApp.app/Contents/Resources' (macOS)
+    // or 'YourApp/resources' (Windows/Linux).
+    // Binaries are now inside 'app.asar.unpacked/node_modules/'
+    const unpackedNodeModulesPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules');
+
+    if (binaryName === 'ffmpeg') {
+      // ffmpeg-static on Windows typically puts ffmpeg.exe directly in its root
+      // On other platforms, it's just 'ffmpeg'
+      const ffmpegDir = path.join(unpackedNodeModulesPath, 'ffmpeg-static');
+      executablePath = path.join(ffmpegDir, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+    } else if (binaryName === 'ffprobe') {
+      // ffprobe-static has a nested structure: node_modules/ffprobe-static/bin/${platform}/${arch}/ffprobe(.exe)
+      const ffprobeBinDir = path.join(unpackedNodeModulesPath, 'ffprobe-static', 'bin', process.platform, process.arch);
+      executablePath = path.join(ffprobeBinDir, process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe');
+    }
+  } else {
+    // In development, use the paths provided by ffmpeg-static and ffprobe-static packages
+    if (binaryName === 'ffmpeg') {
+      executablePath = require('ffmpeg-static'); // This gets the path directly from the package
+    } else if (binaryName === 'ffprobe') {
+      executablePath = require('ffprobe-static').path; // This gets the path from the 'path' property
+    }
+  }
+
+  // Ensure path is quoted if it contains spaces (crucial for child_process.exec)
+  return `"${executablePath}"`;
+};
+
+const ffmpegPath = getBinaryPath('ffmpeg');
+const ffprobePath = getBinaryPath('ffprobe');
+
 app.whenReady().then(() => {
+
+  console.log(`FFmpeg path: ${ffmpegPath}`);
+  console.log(`FFprobe path: ${ffprobePath}`);
 
   mainWindow = new BrowserWindow({
     width: 500,
@@ -52,20 +87,22 @@ ipcMain.on('terminate-ffmpeg', () => {
 ipcMain.on('run-ffmpeg', (event, ffmpegCommand) => {
   // Ensure any previous process is terminated before starting a new one
   if (ffmpegProcess) {
-      console.log("Terminating existing FFMPEG process before starting a new one...");
-      ffmpegProcess.kill('SIGTERM');
-      ffmpegProcess = null;
+    console.log("Terminating existing FFMPEG process before starting a new one...");
+    ffmpegProcess.kill('SIGTERM');
+    ffmpegProcess = null;
   }
 
-  console.log(`Executing command: ${ffmpegCommand}`); // Log the command
+  // Prepend the correct ffmpegPath to the command
+  const finalFfmpegCommand = `${ffmpegPath} ${ffmpegCommand}`;
+  console.log(`Executing command: ${finalFfmpegCommand}`); // Log the command
 
-  ffmpegProcess = exec(ffmpegCommand, (error, stdout, stderr) => {
-      if (error) {
-          console.error(`FFMPEG execution error: ${error}`);
-          event.sender.send('ffmpeg-error', `Execution failed: ${error.message}`);
-          ffmpegProcess = null; // Reset reference on completion/failure
-          return;
-      }
+  ffmpegProcess = exec(finalFfmpegCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`FFMPEG execution error: ${error}`);
+      event.sender.send('ffmpeg-error', `Execution failed: ${error.message}`);
+      ffmpegProcess = null; // Reset reference on completion/failure
+      return;
+    }
   });
 
   ffmpegProcess.stderr.on('data', (data) => {
@@ -98,8 +135,8 @@ ipcMain.on('run-ffprobe', (event, filePath) => {
         return;
     }
 
-    // Use ffprobePath from ffprobe-static
-    const command = `"${ffprobePath}" -v quiet -print_format json -show_format -select_streams v:0 -show_streams "${filePath}"`;
+    // Use the determined ffprobePath
+    const command = `${ffprobePath} -v quiet -print_format json -show_format -select_streams v:0 -show_streams "${filePath}"`;
     console.log(`Executing ffprobe command: ${command}`); // Log the ffprobe command
 
     exec(command, (error, stdout, stderr) => {
@@ -122,7 +159,6 @@ ipcMain.on('run-ffprobe', (event, filePath) => {
         }
     });
 });
-
 // Quit the app when all windows are closed (except on macOS, sorry)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
