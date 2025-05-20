@@ -322,7 +322,7 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
     const outputFile = outputFileName + ".mp4";
     // Ensure paths are quoted to handle spaces
     // Using -crf for constant quality encoding
-    const ffmpegCommand = `ffmpeg -y ${usecuda} -i "${selectedFilePath}" -c:v libx264 -crf ${bitrate} "${outputFile}"`;
+    const ffmpegCommand = `-y ${usecuda} -i "${selectedFilePath}" -c:v libx264 -crf ${bitrate} "${outputFile}"`;
 
     return { command: ffmpegCommand, outputFile: outputFile }; // Return command and output file name
 }

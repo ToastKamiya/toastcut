@@ -1,6 +1,6 @@
 {
   "name": "toastcut",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A lightweight OS-agnostic video editor based on FFMPEG",
   "main": "main.js",
   "scripts": {
@@ -19,10 +19,13 @@
       "index.html",
       "styles.css",
       "assets/**/*",
-      "operations/*"
+      "operations/*",
+      "node_modules/ffmpeg-static/**/*",
+      "node_modules/ffprobe-static/bin/${platform}/**/*"
     ],
     "asarUnpack": [
-    "node_modules/ffprobe-static/**"
+      "node_modules/ffmpeg-static/ffmpeg.exe",
+      "node_modules/ffprobe-static/bin/${platform}/**/*"
     ],
     "extraResources": [
       {
@@ -42,9 +45,11 @@
   },
   "devDependencies": {
     "electron": "34.0.1",
-    "electron-builder": "25.1.8"
+    "electron-builder": "^25.1.8",
+    "ffmpeg-static": "^5.2.0"
   },
   "dependencies": {
-    "ffprobe-static": "^3.1.0"
+    "ffprobe-static": "^3.1.0",
+    "ffmpeg-static": "^5.2.0"
   }
 }

@@ -74,7 +74,7 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
 
     // Construct the command
     const outputFile = outputFileName + ".mp4";
-    const ffmpegCommand = `ffmpeg -y ${usecuda} -ss ${startTime} -to ${endTime} -i "${selectedFilePath}" -c copy "${outputFile}"`;
+    const ffmpegCommand = `-y ${usecuda} -ss ${startTime} -to ${endTime} -i "${selectedFilePath}" -c copy "${outputFile}"`;
 
     return { command: ffmpegCommand, outputFile: outputFile }; // Return command and output file name
 }

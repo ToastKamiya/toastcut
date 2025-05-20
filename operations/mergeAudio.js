@@ -43,7 +43,7 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
 
     const outputFile = outputFileName + ".mp4";
 
-    const ffmpegCommand = `ffmpeg -y -i "${selectedFilePath}" -map 0:v:0 -map 0:a -c:v copy -c:a aac -b:a 192k -ac 2 "${outputFile}"`;
+    const ffmpegCommand = `-y -i "${selectedFilePath}" -map 0:v:0 -map 0:a -c:v copy -c:a aac -b:a 192k -ac 2 "${outputFile}"`;
     // -map 0:v:0: Selects the first video stream from input 0
     // -map 0:a: Selects ALL audio streams from input 0
     // -c:v copy: Copies the video stream without re-encoding

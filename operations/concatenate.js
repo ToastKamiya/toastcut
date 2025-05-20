@@ -55,7 +55,7 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
     fs.writeFileSync(concatFilePath, list);
 
     // Construct the FFMPEG command for concatenation
-    const ffmpegCommand = `ffmpeg -y -f concat -safe 0 -i "${concatFilePath}" -c copy "${outputFile}"`;
+    const ffmpegCommand = `-y -f concat -safe 0 -i "${concatFilePath}" -c copy "${outputFile}"`;
 
     return { command: ffmpegCommand, outputFile: outputFile, tempFilePath: concatFilePath };
 }
