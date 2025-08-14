@@ -56,7 +56,7 @@ app.whenReady().then(() => {
       enableRemoteModule: true, 
     },
   });
-  mainWindow.removeMenu()
+  //mainWindow.removeMenu()
 
   // Load your index.html file
   mainWindow.loadFile('index.html');

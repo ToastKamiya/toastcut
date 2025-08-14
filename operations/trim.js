@@ -5,7 +5,11 @@ const fs = require('fs');
 // Function to provide the HTML for the TRIM operation UI
 function getUIHtml() {
     return `
-        <label>Precise Trim (seconds.milliseconds):</label>
+        <label>Precise Trim (seconds.milliseconds):<span class="info-icon">i
+                <span class="tooltip">
+                    Enabling the option lets you trim video to millisecond precision. Caution! This option re-encodes your video, which takes longer.
+                </span>
+            </span></label>
         <input type="checkbox" id="preciseTrimToggle" style="margin-left: 10px;"><br/><br/>
 
         <div id="hmsInputs">
@@ -182,10 +186,10 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
 
     if (preciseTrimToggle.checked) {
         // Precise trim: Use output seeking (-ss after -i) and re-encode
-        ffmpegCommand = `-y ${usecudaDecode} -i "${selectedFilePath}" -ss ${startTime} -to ${endTime} -c:v ${videoCodec} ${codecOptions} -c:a ${audioCodec} ${audioBitrate} -vsync 0 "${outputFile}"`;
+        ffmpegCommand = `-y ${usecudaDecode} -i "${selectedFilePath}" -movflags +faststart -ss ${startTime} -to ${endTime} -c:v ${videoCodec} ${codecOptions} -c:a ${audioCodec} ${audioBitrate} -vsync 0 "${outputFile}"`;
     } else {
         // Fast trim: Use input seeking (-ss before -i) and stream copy (-c copy)
-        ffmpegCommand = `-y ${usecudaDecode} -ss ${startTime} -to ${endTime} -i "${selectedFilePath}" -c copy "${outputFile}"`;
+        ffmpegCommand = `-y ${usecudaDecode} -ss ${startTime} -to ${endTime} -i "${selectedFilePath}" -movflags +faststart -c copy "${outputFile}"`;
     }
 
     return { command: ffmpegCommand, outputFile: outputFile }; // Return command and output file name

@@ -184,6 +184,55 @@ label {
     z-index: 2; /* Crucial: Ensure input is above the label to receive events */
 }
 
+
+/* Styling for the custom file input container for additional videos */
+.custom-file-input-wrapper {
+    position: relative; /* Establish a positioning context for the label and input */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Spacing between button and remove button */
+    margin-bottom: 10px;
+    height: 40px; /* Give it a consistent height */
+}
+
+/* Hide the native file input element completely but keep it clickable */
+.custom-file-input-wrapper input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2; /* To ensure it's on top of the label */
+}
+
+/* Style the label to look like a button */
+.custom-file-input-wrapper .file-upload-label {
+    position: relative; /* Position relative to the wrapper */
+    flex-grow: 1; /* Allow the label to fill available space */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: var(--color-bg-input);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    text-align: center;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    z-index: 1; /* Below the transparent input */
+    pointer-events: none; /* Crucial: Allow mouse events to pass through */
+}
+
+.custom-file-input-wrapper .file-upload-label:hover {
+    background-color: var(--color-carousel-item);
+    border-color: var(--color-border-selected);
+}
+
 /* File Name Display (Specific to the top file input) */
 .card #file-name-card {
     font-size: 0.9em;
@@ -455,4 +504,64 @@ label {
 /* Specific Error Message Style */
 #operationDetails p[style*="color: red;"] {
     color: var(--color-error) !important; /* Use error color variable */
+}
+
+/* UPDATE 1.0.7 */
+
+/* Info icon container */
+.info-icon {
+    display: inline-block;
+    position: relative;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background-color: var(--color-border); /* greyish circle */
+    color: var(--color-bg-card); /* dark text inside */
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 18px;
+    cursor: pointer;
+    margin-left: 6px;
+}
+
+/* Tooltip text */
+.info-icon .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    max-width: 220px;
+    background-color: var(--color-bg-card);
+    color: var(--color-text);
+    text-align: left;
+    border-radius: 5px;
+    padding: 6px 8px;
+    position: absolute;
+    z-index: 999;
+    bottom: 125%; /* Position above the icon */
+    left: 50%;
+    transform: translateX(-50%);
+    border: 1px solid var(--color-border);
+    font-size: 1em;
+    transition: opacity 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+
+/* Tooltip arrow */
+.info-icon .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%; /* at the bottom of tooltip */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--color-bg-card) transparent transparent transparent;
+}
+
+/* Show tooltip on hover */
+.info-icon:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
 }
