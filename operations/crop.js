@@ -61,7 +61,7 @@ function getFFmpegCommand(selectedFilePath, containerElement) {
     // Construct the FFMPEG command
     const outputFile = outputFileName + ".mp4";
     // Ensure paths are quoted to handle spaces
-    const ffmpegCommand = `-y ${usecuda} -i "${selectedFilePath}" -filter:v "crop=${width}:${height}" "${outputFile}"`;
+    const ffmpegCommand = `-y ${usecuda} -i "${selectedFilePath}" -movflags +faststart -filter:v "crop=${width}:${height}" "${outputFile}"`;
 
     return { command: ffmpegCommand, outputFile: outputFile }; // Return command and output file name
 }
