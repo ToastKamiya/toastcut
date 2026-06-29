@@ -11,31 +11,42 @@ const getBinaryPath = (binaryName) => {
   let executablePath;
 
   if (app.isPackaged) {
-    // In a packaged app, use process.resourcesPath which points to 'YourApp.app/Contents/Resources' (macOS)
-    // or 'YourApp/resources' (Windows/Linux).
-    // Binaries are now inside 'app.asar.unpacked/node_modules/'
-    const unpackedNodeModulesPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules');
+    const unpackedPath = path.join(process.resourcesPath, 'app.asar.unpacked');
 
     if (binaryName === 'ffmpeg') {
-      // ffmpeg-static on Windows typically puts ffmpeg.exe directly in its root
-      // On other platforms, it's just 'ffmpeg'
-      const ffmpegDir = path.join(unpackedNodeModulesPath, 'ffmpeg-static');
-      executablePath = path.join(ffmpegDir, process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg');
+      // Point straight to our custom asset directories
+      const platformDir = process.platform === 'win32' ? 'win' : 'linux';
+      const binaryExt = process.platform === 'win32' ? '.exe' : '';
+      executablePath = path.join(unpackedPath, 'assets', 'bin', platformDir, `ffmpeg${binaryExt}`);
     } else if (binaryName === 'ffprobe') {
-      // ffprobe-static has a nested structure: node_modules/ffprobe-static/bin/${platform}/${arch}/ffprobe(.exe)
-      const ffprobeBinDir = path.join(unpackedNodeModulesPath, 'ffprobe-static', 'bin', process.platform, process.arch);
+      // ffprobe-static bundles all files, so its pathing works out of the box
+      const ffprobeBinDir = path.join(unpackedPath, 'node_modules', 'ffprobe-static', 'bin', process.platform, process.arch);
       executablePath = path.join(ffprobeBinDir, process.platform === 'win32' ? 'ffprobe.exe' : 'ffprobe');
     }
   } else {
-    // In development, use the paths provided by ffmpeg-static and ffprobe-static packages
+    // Development Environment Fallback
     if (binaryName === 'ffmpeg') {
-      executablePath = require('ffmpeg-static'); // This gets the path directly from the package
+      try {
+        executablePath = require('@ffmpeg-installer/ffmpeg').path;
+      } catch {
+        executablePath = 'ffmpeg'; // system fallback
+      }
     } else if (binaryName === 'ffprobe') {
-      executablePath = require('ffprobe-static').path; // This gets the path from the 'path' property
+      executablePath = require('ffprobe-static').path;
     }
   }
 
-  // Ensure path is quoted if it contains spaces (crucial for child_process.exec)
+  // Ensure execution permissions on Unix/Linux platforms
+  if (app.isPackaged && process.platform !== 'win32') {
+    try {
+      if (fs.existsSync(executablePath)) {
+        fs.chmodSync(executablePath, '755');
+      }
+    } catch (chmodError) {
+      console.error(`Failed to set permissions on ${binaryName}:`, chmodError);
+    }
+  }
+
   return `"${executablePath}"`;
 };
 
@@ -52,8 +63,8 @@ app.whenReady().then(() => {
     height: 1000,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false, 
-      enableRemoteModule: true, 
+      contextIsolation: false,
+      enableRemoteModule: true,
     },
   });
   //mainWindow.removeMenu()
@@ -122,42 +133,42 @@ ipcMain.on('run-ffmpeg', (event, ffmpegCommand) => {
     ffmpegProcess = null;
   });
 
-   ffmpegProcess.on('error', (error) => {
-       console.error(`FFMPEG process error event: ${error}`);
-       event.sender.send('ffmpeg-error', `Process error: ${error.message}`);
-       ffmpegProcess = null; // Reset reference on error
-   });
+  ffmpegProcess.on('error', (error) => {
+    console.error(`FFMPEG process error event: ${error}`);
+    event.sender.send('ffmpeg-error', `Process error: ${error.message}`);
+    ffmpegProcess = null; // Reset reference on error
+  });
 });
 
 ipcMain.on('run-ffprobe', (event, filePath) => {
-    if (!filePath) {
-        event.sender.send('ffprobe-result', { error: 'No file path provided.' });
-        return;
+  if (!filePath) {
+    event.sender.send('ffprobe-result', { error: 'No file path provided.' });
+    return;
+  }
+
+  // Use the determined ffprobePath
+  const command = `${ffprobePath} -v quiet -print_format json -show_format -select_streams v:0 -show_streams "${filePath}"`;
+  console.log(`Executing ffprobe command: ${command}`); // Log the ffprobe command
+
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`FFprobe execution error: ${error}`);
+      // Send error details back to renderer
+      event.sender.send('ffprobe-result', { error: error.message, stderr: stderr });
+      return;
     }
 
-    // Use the determined ffprobePath
-    const command = `${ffprobePath} -v quiet -print_format json -show_format -select_streams v:0 -show_streams "${filePath}"`;
-    console.log(`Executing ffprobe command: ${command}`); // Log the ffprobe command
-
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`FFprobe execution error: ${error}`);
-            // Send error details back to renderer
-            event.sender.send('ffprobe-result', { error: error.message, stderr: stderr });
-            return;
-        }
-
-        try {
-            // Parse the JSON output from ffprobe
-            const ffprobeData = JSON.parse(stdout);
-            // Send the parsed data back to the renderer
-            event.sender.send('ffprobe-result', { data: ffprobeData });
-        } catch (parseError) {
-            console.error(`Failed to parse ffprobe JSON output: ${parseError}`);
-             // Send parsing error back to renderer
-            event.sender.send('ffprobe-result', { error: 'Failed to parse ffprobe output.', parseError: parseError.message, stdout: stdout });
-        }
-    });
+    try {
+      // Parse the JSON output from ffprobe
+      const ffprobeData = JSON.parse(stdout);
+      // Send the parsed data back to the renderer
+      event.sender.send('ffprobe-result', { data: ffprobeData });
+    } catch (parseError) {
+      console.error(`Failed to parse ffprobe JSON output: ${parseError}`);
+      // Send parsing error back to renderer
+      event.sender.send('ffprobe-result', { error: 'Failed to parse ffprobe output.', parseError: parseError.message, stdout: stdout });
+    }
+  });
 });
 // Quit the app when all windows are closed (except on macOS, sorry)
 app.on('window-all-closed', () => {
