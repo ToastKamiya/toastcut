@@ -21,6 +21,7 @@
       "assets/**/*",
       "operations/*",
       "node_modules/ffprobe-static/bin/${platform}/**/*"
+      "!dist/**/*"
     ],
     "asarUnpack": [
       "assets/bin/**/*",
