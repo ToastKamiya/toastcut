@@ -5,12 +5,8 @@ const fs = require('fs');
 // Function to provide the HTML for the TRIM operation UI
 function getUIHtml() {
     return `
-        <label>Precise Trim (seconds.milliseconds):<span class="info-icon">i
-                <span class="tooltip">
-                    Enabling the option lets you trim video to millisecond precision. Caution! This option re-encodes your video, which takes longer.
-                </span>
-            </span></label>
-        <input type="checkbox" id="preciseTrimToggle" style="margin-left: 10px;"><br/><br/>
+        <label>Precise Trim (seconds.milliseconds):</label>
+        <input type="checkbox" id="preciseTrimToggle"><br/><br/>
 
         <div id="hmsInputs">
             <label>Start Time (HH:MM:SS):</label>

@@ -6,14 +6,13 @@ let extraVideoPaths = []; // All videos after the first one
 
 function getUIHtml() {
     return `
-        <p>First video - <strong>(already selected above)</strong></p>
+        <p>First video - <strong>(Main upload)</strong></p>
         <br/>
         <p>Additional videos:
-            <span class="info-icon">i
                 <span class="tooltip">
-                    Added videos get connected in top-down order, with the first clip being the one above in the main file upload, and others following.
+                    Added videos get connected in top-down order, with the first clip being the one in the main file upload, and others following.
                 </span>
-            </span></p>
+            </p>
         <div id="videoInputsContainer"></div>
         <button type="button" id="addVideoBtn">+ Add Video</button>
         <br/><br/>
