@@ -3,167 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ToastCut V1.0.7</title>
+  <title>ToastCut V2.0.0</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="./assets/style.css">
 </head>
 <body>
- <div class="content-wrapper">
-    <h1>ToastCut</h1>
-    <h3>Powered by FFMPEG and Electron</h3>
 
-    <div class="card">
-        <div class="file-input-container">
-            <label for="inputFile" class="file-input-label">
-                <span>Click or Drag Video File Here</span>
-            </label>
-            <input type="file" id="inputFile" accept="video/*">
-        </div>
-        <div id="file-name-card">No file selected</div>
-
-        <video id="videoPreview" controls style="width: 400px; height: 225px;">
-            Your browser does not support the video tag.
-        </video>
+<div class="app">
+  <div class="left">
+    <div class="preview-area" id="dropZone">
+      <video id="videoPreview" controls class="video-loaded">
+        Your browser does not support the video tag.
+      </video>
+      <div class="video-mock" id="videoMock">
+        <div class="play-icon"><i class="ti ti-player-play" style="font-size:18px;margin-left:2px"></i></div>
+        <div class="drop-hint">Drop a video file here<br><span>or click area to open file explorer</span></div>
+      </div>
+      <input type="file" id="inputFile" accept="video/*" style="display: none;">
+      <div class="section-indicator" id="timestampIndicator">00:00:00</div>
     </div>
 
-    <div class="card">
-        <label for="operation">Select Operation:</label>
+    <div class="file-bar" id="fileBarTrigger">
+      <div class="file-dot"></div>
+      <span class="file-name" id="file-name-card">No file selected</span>
+      <span class="file-chip">Open File</span>
+    </div>
+  </div>
 
-        <select id="operation" style="display: none;">
-            <option value="" disabled selected>Select your option</option>
-            <option value="TRIM">Trim</option>
-            <option value="CONCATENATE">Concatenate</option>
-            <option value="CROP">Crop</option>
-            <option value="VFRtoCFR">VFR to CFR</option>
-            <option value="MERGEAUDIO">Merge Audio</option>
-            <option value="BITRATE">Compress</option>
-            <option value="GIF">Make GIF</option>
-        </select>
-
-        <div id="operation-carousel-wrapper">
-          <div id="operation-carousel">
-          </div>
-        </div>
-
-        <div id="operationDetails" style="margin-top: 20px;"> </div>
+  <div class="right">
+    <div class="brand-bar">
+      <div class="brand-icon">
+        <svg viewBox="0 0 12 12"><path d="M2 9L6 3L10 9H2Z"/></svg>
+      </div>
+      <span class="brand-name">ToastCut</span>
+      <button id="themeToggle" class="theme-toggle-btn" title="Toggle Theme">
+        <i class="ti ti-moon" id="themeIcon"></i>
+      </button>
+      <span class="brand-ver">v2.0.0</span>
     </div>
 
-    <div class="card"> <div class="run-button-container">
-            <button class="runbtn" id="runButton">Run FFmpeg</button>
-            <label class="toggle-container">
-                <br/>
-          <input type="checkbox" id="askSaveLocation" />
-          Manually select output location
-        <span class="info-icon">i
-                <span class="tooltip">
-                    If not enabled, video is outputted to this app's .exe directory.
-                </span>
-            </span></label>
-        </div>
+    <select id="operation" style="display: none;">
+        <option value="" disabled selected>Select your option</option>
+        <option value="TRIM">Trim</option>
+        <option value="CONCATENATE">Concatenate</option>
+        <option value="CROP">Crop</option>
+        <option value="VFRtoCFR">VFR to CFR</option>
+        <option value="MERGEAUDIO">Merge Audio</option>
+        <option value="BITRATE">Compress</option>
+        <option value="GIF">Make GIF</option>
+    </select>
 
-        <div id="progress"></div>
-        <div id="output"></div>
+    <div class="ops-section">
+      <div class="ops-label">Operation</div>
+      <div class="ops-grid" id="customOpsGrid">
+        <button class="op-btn active" data-value="TRIM"><i class="ti ti-cut"></i>Trim</button>
+        <button class="op-btn" data-value="CONCATENATE"><i class="ti ti-arrows-join"></i>Concatenate</button>
+        <button class="op-btn" data-value="CROP"><i class="ti ti-crop"></i>Crop</button>
+        <button class="op-btn" data-value="VFRtoCFR"><i class="ti ti-activity"></i>VFR → CFR</button>
+        <button class="op-btn" data-value="MERGEAUDIO"><i class="ti ti-music"></i>Merge audio</button>
+        <button class="op-btn" data-value="BITRATE"><i class="ti ti-file-zip"></i>Compress</button>
+        <button class="op-btn" data-value="GIF"><i class="ti ti-gif"></i>Make GIF</button>
+      </div>
     </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const selectElement = document.getElementById('operation');
-        const carouselElement = document.getElementById('operation-carousel');
-        const operationDetailsElement = document.getElementById('operationDetails'); // Get operationDetails div
-        const inputFileElement = document.getElementById('inputFile'); // Get the file input
-        const fileNameCardElement = document.getElementById('file-name-card'); // Get the file name display div
-        const runButtonElement = document.getElementById('runButton'); // Get the run button
+    <div class="params" id="operationDetails"></div>
 
+    <div class="run-section">
+      <div id="output">System ready...</div>
 
-        // Function to render carousel items based on select options
-        function renderCarousel() {
-            carouselElement.innerHTML = '';
+      <label class="save-row">
+        <input type="checkbox" id="askSaveLocation" class="save-check" />
+        <span class="save-label">Choose output location manually</span>
+      </label>
 
-            // Start from index 1 to skip the "Select your option" placeholder
-            for (let i = 1; i < selectElement.options.length; i++) {
-                const option = selectElement.options[i];
-                const item = document.createElement('span');
-                item.classList.add('operation-item');
-                item.textContent = option.text;
-                item.dataset.value = option.value; // Store the value
+      <button class="run-btn" id="runButton">
+        <i class="ti ti-player-play"></i> Run FFmpeg
+      </button>
+    </div>
+  </div>
+</div>
 
-                // Add click listener
-                item.addEventListener('click', () => {
-                    // Remove 'selected' class from all items
-                    carouselElement.querySelectorAll('.operation-item').forEach(op => {
-                        op.classList.remove('selected');
-                    });
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      const selectElement = document.getElementById('operation');
+      const opsGrid = document.getElementById('customOpsGrid');
+      const inputFile = document.getElementById('inputFile');
+      const dropZone = document.getElementById('dropZone');
+      const fileBarTrigger = document.getElementById('fileBarTrigger');
+      const fileNameCard = document.getElementById('file-name-card');
+      const videoPreview = document.getElementById('videoPreview');
+      const videoMock = document.getElementById('videoMock');
 
-                    // Add 'selected' class to the clicked item
-                    item.classList.add('selected');
+      // --- Theme Toggle Controller ---
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
 
-                    // Update the hidden select's value
-                    selectElement.value = item.dataset.value;
-
-                    // Manually dispatch a 'change' event on the hidden select
-                    const changeEvent = new Event('change', { bubbles: true });
-                    selectElement.dispatchEvent(changeEvent);
-
-                    // Clearing operationDetails is now handled by the fade-out in renderer.js
-                });
-
-                carouselElement.appendChild(item);
-            }
-        }
-        // --- File Input Change Listener ---
-        // Add a listener to the actual file input to display the selected file name
-        inputFileElement.addEventListener('change', () => {
-            if (inputFileElement.files.length > 0) {
-                fileNameCardElement.textContent = inputFileElement.files[0].name;
+        themeToggle.addEventListener('click', () => {
+            // Target the document element (html / :root) instead of body
+            document.documentElement.classList.toggle('light-mode');
+            if (document.documentElement.classList.contains('light-mode')) {
+                themeIcon.className = 'ti ti-sun';
             } else {
-                fileNameCardElement.textContent = 'No file selected';
+                themeIcon.className = 'ti ti-moon';
             }
         });
 
-        // --- Run Button Click Listener ---
-        // Add a listener to the Run FFmpeg button to scroll to the bottom
-        runButtonElement.addEventListener('click', () => {
-            // Scrolls the entire window to the bottom of the document body with a smooth animation
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth'
-            });
-        });
+      // --- Bind Grid Buttons to Engine Logic ---
+      opsGrid.querySelectorAll('.op-btn').forEach(button => {
+          button.addEventListener('click', () => {
+              opsGrid.querySelectorAll('.op-btn').forEach(btn => btn.classList.remove('active'));
+              button.classList.add('active');
 
-        // --- Mouse Wheel Scroll Listener for Carousel ---
-        carouselElement.addEventListener('wheel', (event) => {
-            // Prevent the default vertical scroll behavior
-            event.preventDefault();
+              // Mirror selections to standard hidden element
+              selectElement.value = button.dataset.value;
+              selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+      });
 
-            // Scroll the carousel horizontally based on the vertical wheel movement
-            carouselElement.scrollLeft += event.deltaY;
-        });
+      // --- File selection controllers ---
+      const openExplorer = (e) => {
+          if (e.target !== videoPreview) inputFile.click();
+      };
+      dropZone.addEventListener('click', openExplorer);
+      fileBarTrigger.addEventListener('click', openExplorer);
 
+      // Drag and Drop implementation
+      dropZone.addEventListener('dragover', (e) => e.preventDefault());
+      dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (e.dataTransfer.files.length > 0) {
+              inputFile.files = e.dataTransfer.files;
+              inputFile.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+      });
 
-        // Initial render of the carousel
-        renderCarousel();
+      // Synchronize media visibility states
+      inputFile.addEventListener('change', () => {
+          if (inputFile.files.length > 0) {
+              fileNameCard.textContent = inputFile.files[0].name;
+              videoMock.style.display = 'none';
+              videoPreview.style.display = 'block';
+          } else {
+              fileNameCard.textContent = 'No file selected';
+              videoMock.style.display = 'flex';
+              videoPreview.style.display = 'none';
+          }
+      });
 
-        // --- Auto-select the first option ('TRIM') on page load ---
-        // Use a small timeout to ensure carousel items are rendered before attempting to select
-        setTimeout(() => {
-             const firstOptionValue = 'TRIM'; // Value of the first actual option
-             const firstCarouselItem = carouselElement.querySelector(`.operation-item[data-value="${firstOptionValue}"]`);
+      // --- Native Video Timeline Sync ---
+      videoPreview.addEventListener('timeupdate', () => {
+          if (!videoPreview.duration) return;
+          const current = videoPreview.currentTime;
+          const duration = videoPreview.duration;
+          const pct = (current / duration) * 100;
 
-             if (firstCarouselItem) {
-                 // Visually select the item
-                 firstCarouselItem.classList.add('selected');
+          const formatTime = (seconds) => {
+              const mins = Math.floor(seconds / 60);
+              const secs = Math.floor(seconds % 60);
+              return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+          };
 
-                 // Update the hidden select's value
-                 selectElement.value = firstOptionValue;
+          // Continuous live overlay tracking
+          const hrs = Math.floor(current / 3600).toString().padStart(2, '0');
+          const m = Math.floor((current % 3600) / 60).toString().padStart(2, '0');
+          const s = Math.floor(current % 60).toString().padStart(2, '0');
+          document.getElementById('timestampIndicator').textContent = `${hrs}:${m}:${s}`;
+      });
 
-                 // Dispatch a change event on the hidden select
-                 const initialChangeEvent = new Event('change', { bubbles: true });
-                 selectElement.dispatchEvent(initialChangeEvent);
-             }
-        }, 50); // Small delay to ensure items are in DOM
+      videoPreview.addEventListener('loadedmetadata', () => {
+          const duration = videoPreview.duration;
+          const mins = Math.floor(duration / 60);
+          const secs = Math.floor(duration % 60);
+      });
 
-
-    }); // End of DOMContentLoaded listener
-  </script>
-  <script src="./renderer.js"></script>
+      // Trigger default active selection (TRIM) on startup sequence
+      setTimeout(() => {
+          selectElement.value = 'TRIM';
+          selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+      }, 50);
+  });
+</script>
+<script src="./renderer.js"></script>
 </body>
 </html>

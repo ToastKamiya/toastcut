@@ -37,10 +37,10 @@ if (inputFile) {
             if (videoPreview) {
                 videoPreview.style.display = 'none';
             }
-             // Notify the current operation module that the file was cleared
-             if (currentOperationModule && typeof currentOperationModule.handleFileChange === 'function') {
-                 currentOperationModule.handleFileChange(null, operationDetailsDiv); // Pass null for cleared file
-             }
+            // Notify the current operation module that the file was cleared
+            if (currentOperationModule && typeof currentOperationModule.handleFileChange === 'function') {
+                currentOperationModule.handleFileChange(null, operationDetailsDiv); // Pass null for cleared file
+            }
         }
     });
 }
@@ -132,7 +132,7 @@ function updateOperationUI() {
         // Reset temporary file path when operation changes
         // Keep this if you still have the concatenate logic
         if (typeof deleteTempConcatFile === 'function') {
-             deleteTempConcatFile();
+            deleteTempConcatFile();
         }
 
 
@@ -185,7 +185,7 @@ function updateOperationUI() {
 
             // --- Fade In Error Message ---
             // Also fade in the error message itself
-             requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     operationDetailsDiv.style.opacity = '1';
                 });
@@ -242,7 +242,7 @@ async function runFFMPEG() {
 
     let outputFile = commandResult.outputFile;
     let ffmpegCommand = commandResult.command;
-    let fullOutputPath = path.resolve(outputFile);
+    let fullOutputPath;
 
     // Check if user wants to choose save location
     const askSaveCheckbox = document.getElementById('askSaveLocation');
@@ -253,7 +253,7 @@ async function runFFMPEG() {
             const result = await ipcRenderer.invoke('show-save-dialog', {
                 title: 'Save processed video as…',
                 defaultPath: outputFile,
-                filters: [{ name: 'Video files', extensions: ['mp4', 'mkv', 'mov'] }]
+                    filters: [{ name: 'Video files', extensions: ['mp4', 'mkv', 'mov'] }]
             });
 
             if (result.canceled || !result.filePath) {
@@ -274,6 +274,16 @@ async function runFFMPEG() {
             runButton.disabled = false;
             return;
         }
+    } else {
+        // Fallback: Save directly to the input file's directory
+        const inputDir = path.dirname(selectedFilePath);
+        const outputFileName = path.basename(outputFile);
+
+        fullOutputPath = path.join(inputDir, outputFileName);
+
+        // Update the command and outputFile with the absolute path targeting the input directory
+        ffmpegCommand = ffmpegCommand.replace(commandResult.outputFile, fullOutputPath);
+        outputFile = fullOutputPath;
     }
 
     if (fs.existsSync(fullOutputPath)) {
@@ -296,8 +306,8 @@ async function runFFMPEG() {
 // Handle FFMPEG progress updates
 ipcRenderer.on('ffmpeg-progress', (event, message) => {
     if (outputElement) {
-       outputElement.innerText = 'Processing...';
-       // Progress parsing logic can be added here if needed, using progressElement
+        outputElement.innerText = 'Processing...';
+        // Progress parsing logic can be added here if needed, using progressElement
     }
 });
 
