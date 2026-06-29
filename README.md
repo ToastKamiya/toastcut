@@ -32,21 +32,20 @@ Documentation on exact app usage instructions is in development. Here's a summar
 # Building
 Follow the steps below to install the program and dependencies:
 1. Install Node.js (v14 or newer, v18 recommended) (https://nodejs.org)
-3. Install FFmpeg (https://www.ffmpeg.org/)
-4. Clone the repository:
+2. Wine (Optional): If you are building the Windows target from a Linux machine, you must install Wine to compile the Windows package correctly:
+    ```
+    sudo apt update && sudo apt install wine64
+3. Clone the repository:
    ```
    git clone https://github.com/ToastKamiya/toastcut.git
    cd toastcut
-5. Install dependencies:
+4. Install dependencies:
    ```
    npm install
-6. If not installed already, install electron-builder to build the app
-   ```
-   npm install -g electron-builder
-7. Test the app in debug mode
+5. (Optional) Test the app in debug mode
    ```
    npm run start
-8. Build the app executables
+6. Build the app executables
    ```
    npm run build
 # License
