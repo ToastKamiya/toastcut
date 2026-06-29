@@ -7,7 +7,7 @@ Lightweight, multi-OS, lightning fast simple video editor.<br/>
 ToastCut, previously called "toast-ffmpeg-electron", is an electron-based video editing suite, using FFmpeg for the video operations.
 This program started out as a windows batch script that accepted a filename and timestamps to trim a video length. After adding thousands of "if()" statements to the program to implement other functionalities, I decided to port the program into an electron app that can work in many OS's.
 
-![App Screenshot](assets/screenshot.png)
+![App Screenshot](assets/screenshot.jpg)
 
 ## Main principles
 - The program is easy to run (app rendering itself is zippy in any computer, as it's mostly just pure HTML with minimal .css).
@@ -18,13 +18,12 @@ This program started out as a windows batch script that accepted a filename and 
 # How to use
 Documentation on exact app usage instructions is in development. Here's a summary:
 - Step 1: Open the program (ToastCut.exe), drag and drop or browse a video file into the file upload dialogue in the top.
-- Step 2: Select an operation to do from the dropdown list (ex. Trim)
+- Step 2: Select an operation to do from the list in the top right (ex. Trim)
 - Step 3: Fill out textboxes and required info (for Trim, write beginning/end timestamps, or apply them from the seeker head in the video preview!)
 - Step 4: Write the name of the output file, and optionally check the option to use CUDA encoding (Experimental, safe to use but performance may not be affected).
-- Step 5. Click "Run FFmpeg" and look at the box below for details on operation progress. On success, the output video is saved to the program's root folder.
+- Step 5. Click "Run FFmpeg" and look at the box below for details on operation progress. On success, the output video is saved to the same folder as the source video, unless specified elsewhere.
 
 # Dependencies
-  - FFmpeg
   - NodeJS
   - Electron-Builder
   - Electron
@@ -48,6 +47,7 @@ Follow the steps below to install the program and dependencies:
 6. Build the app executables
    ```
    npm run build
+   ```
 # License
 This program is licensed under the GPL v3.0 general public use license. See LICENSE.txt for more details.
 

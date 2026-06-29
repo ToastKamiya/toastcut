@@ -69,6 +69,8 @@ app.whenReady().then(() => {
     },
   });
 
+  mainWindow.setMenu(null);
+
   // Load your index.html file
   mainWindow.loadFile('index.html');
 
