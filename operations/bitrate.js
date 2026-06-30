@@ -10,66 +10,122 @@ let currentContainerElement = null; // Store the container element reference
 // Function to provide the HTML for the BITRATE operation UI
 function getUIHtml() {
     return `
-        <label>Compression (CRF): <span id="crfValue">23</span></label>
-        <div style="margin-bottom: 10px;">
-            <input type="range" min="0" max="51" value="23" class="slider w-full" id="bitrateSelect">
-        </div>
-        <p class="text-sm text-gray-600 mt-1">Lower CRF means higher quality and larger file size (0 is lossless, ~23 is default, 51 is worst quality).</p>
-        <br/>
-        <div style="display: flex; justify-content: space-between; gap: 20px;">
-            <div id="inputInfo" class="mt-4 text-sm text-gray-700" style="flex: 1;">
-                <strong>Input Info:</strong><br>
-                File Size: <span id="inputSize">N/A</span><br>
-                Duration: <span id="inputDuration">N/A</span><br>
-                Video Bitrate: <span id="inputVideoBitrate">N/A</span><br>
-                Overall Bitrate: <span id="inputOverallBitrate">N/A</span>
-            </div>
-            <br>
+    <label class="block mb-2 font-medium">Compression Level:</label>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
 
-            <div id="outputEstimate" class="mt-4 text-sm text-gray-700" style="flex: 1;">
-                <strong>Estimated Output:</strong><br>
-                Estimated Size: <span id="estimatedSize">N/A</span><br>
-                Estimated Video Bitrate: <span id="estimatedVideoBitrate">N/A</span>
-            </div>
-        </div>
-        <br>
+    <button type="button" class="op-btn" id="btnCompHigh" data-crf="25">Low</button>
+    <button type="button" class="op-btn active" id="btnCompMed" data-crf="30">Medium (Default)</button>
+    <button type="button" class="op-btn" id="btnCompLow" data-crf="33">High</button>
+    </div>
 
-        <label class="mt-4">Output File Name:</label>
-        <div style="display: flex; margin-bottom: 10px;">
-            <input type="text" id="outputFileName" class="border p-2 rounded w-full">
-            <label style="align-content: center; padding-left: 10px;">.mp4</label>
-        </div>
-        <label class="flex items-center">
-            Use Cuda HW-Acceleration:
-            <input type="checkbox" id="useaccel" value="-hwaccel cuda" class="mr-2">
-        </label>
+    <div>
+    <button type="button" id="toggleAdvanced" style="
+    background: none;
+    font-size: var(--fs-10);
+    color: var(--text-muted);
+    ">
+    Advanced Settings
+    </button>
+    </div>
+
+    <div id="advancedSection" style="display: none; margin-bottom: 15px; border-left: 2px solid #e5e7eb; padding-left: 10px;">
+    <label>Custom Compression (CRF): <span id="crfValue">30</span></label>
+    <div style="margin-bottom: 10px;">
+    <input type="range" min="0" max="51" value="30" class="slider w-full" id="bitrateSelect">
+    </div>
+    <p class="text-sm text-gray-600 mt-1">Lower CRF means higher quality and larger file size (0 is lossless, ~30 is default, 51 is worst quality).</p>
+    </div>
+
+    <br/>
+    <div style="display: flex; justify-content: space-between; gap: 20px;">
+    <div id="inputInfo" class="mt-4 text-sm text-gray-700" style="flex: 1;">
+    <strong>Input Info:</strong><br>
+    File Size: <span id="inputSize">N/A</span><br>
+    Duration: <span id="inputDuration">N/A</span><br>
+    Video Bitrate: <span id="inputVideoBitrate">N/A</span><br>
+    Overall Bitrate: <span id="inputOverallBitrate">N/A</span>
+    </div>
+    <br>
+
+    <div id="outputEstimate" class="mt-4 text-sm text-gray-700" style="flex: 1;">
+    <strong>Estimated Output:</strong><br>
+    Estimated Size: <span id="estimatedSize">N/A</span><br>
+    Estimated Video Bitrate: <span id="estimatedVideoBitrate">N/A</span>
+    </div>
+    </div>
+    <br>
+
+    <label class="mt-4">Output File Name:</label>
+    <div style="display: flex; margin-bottom: 10px;">
+    <input type="text" id="outputFileName" class="border p-2 rounded w-full">
+    <label style="align-content: center; padding-left: 10px;">.mp4</label>
+    </div>
+    <label class="flex items-center">
+    Use Cuda HW-Acceleration:
+    <input type="checkbox" id="useaccel" value="-hwaccel cuda" class="mr-2">
+    </label>
     `;
 }
 
 // Function to attach event listeners specific to the BITRATE UI
-// Needs access to the container div. It will access selectedFilePath from the outer scope.
-function attachEventListeners(containerElement, videoPreviewElement) { // videoPreviewElement is passed but not used here
-    currentContainerElement = containerElement; // Store the container element
+function attachEventListeners(containerElement, videoPreviewElement) {
+    currentContainerElement = containerElement;
 
     const bitrateSelect = containerElement.querySelector('#bitrateSelect');
     const crfValueSpan = containerElement.querySelector('#crfValue');
+
+    // New UI Elements
+    const presetButtons = containerElement.querySelectorAll('.op-btn');
+    const toggleAdvancedBtn = containerElement.querySelector('#toggleAdvanced');
+    const advancedSection = containerElement.querySelector('#advancedSection');
 
     if (bitrateSelect && crfValueSpan) {
         // Set initial displayed CRF value
         crfValueSpan.innerText = bitrateSelect.value;
 
-        // Add event listener for slider input to update display and estimate
-        bitrateSelect.addEventListener('input', (event) => {
-            const currentCrf = event.target.value;
-            crfValueSpan.innerText = currentCrf;
-            updateOutputEstimate(currentContainerElement, currentCrf); // Use stored container
+        // Helper function to handle CRF changes globally
+        const handleCrfChange = (newCrf) => {
+            bitrateSelect.value = newCrf;
+            crfValueSpan.innerText = newCrf;
+            updateOutputEstimate(currentContainerElement, newCrf);
+
+            // Sync button active classes based on current CRF
+            presetButtons.forEach(btn => {
+                if (btn.getAttribute('data-crf') === String(newCrf)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        };
+
+        // 1. Preset Buttons Event Listeners
+        presetButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetCrf = button.getAttribute('data-crf');
+                handleCrfChange(targetCrf);
+            });
         });
 
+        // 2. Advanced Slider Event Listener
+        bitrateSelect.addEventListener('input', (event) => {
+            handleCrfChange(event.target.value);
+        });
+
+        // 3. Advanced Toggle Listener
+        if (toggleAdvancedBtn && advancedSection) {
+            toggleAdvancedBtn.addEventListener('click', () => {
+                const isHidden = advancedSection.style.display === 'none';
+                advancedSection.style.display = isHidden ? 'block' : 'none';
+                toggleAdvancedBtn.innerText = isHidden ? 'Hide Advanced Settings' : 'Show Advanced Settings';
+            });
+        }
+
         // Trigger initial FFprobe data fetch
-        fetchAndDisplayFileInfo(selectedFilePath, currentContainerElement); // Access selectedFilePath from outer scope
+        fetchAndDisplayFileInfo(selectedFilePath, currentContainerElement);
 
     } else {
-         console.error("BITRATE module: Could not find required UI elements to attach listeners.");
+        console.error("BITRATE module: Could not find required UI elements to attach listeners.");
     }
 }
 

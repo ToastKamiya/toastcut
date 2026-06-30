@@ -5,8 +5,7 @@ const fs = require('fs');
 // Function to provide the HTML for the TRIM operation UI
 function getUIHtml() {
     return `
-        <label>Precise Trim (seconds.milliseconds):</label>
-        <input type="checkbox" id="preciseTrimToggle"><br/><br/>
+        <label>Precise Trim<input type="checkbox" style="width:auto; margin-left: 10px !important;" id="preciseTrimToggle"></label>
 
         <div id="hmsInputs">
             <label>Start Time (HH:MM:SS):</label>

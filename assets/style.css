@@ -38,7 +38,7 @@
 /* Light Mode Calculator Overrides */
 :root.light-mode {
   --l-sign: -1;
-  --l-offset: 100%;
+  --l-offset: 110%;
 }
 
 /* Base Styles */

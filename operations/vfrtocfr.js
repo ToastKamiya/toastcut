@@ -5,7 +5,7 @@ const fs = require('fs');
 // Function to provide the HTML for the VFRtoCFR operation UI
 function getUIHtml() {
     return `
-        <label>Framerate:</label>
+        <label>Set framerate to:</label>
         <div style="margin-bottom: 10px;">
             <input type="number" id="framerateSelect" class="border p-2 rounded w-full" value="30" min="1">
         </div>

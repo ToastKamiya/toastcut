@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ToastCut V2.0.0</title>
+  <title>ToastCut V2.0.1</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <link rel="stylesheet" href="./assets/style.css">
 </head>
@@ -39,7 +39,7 @@
       <button id="themeToggle" class="theme-toggle-btn" title="Toggle Theme">
         <i class="ti ti-moon" id="themeIcon"></i>
       </button>
-      <span class="brand-ver">v2.0.0</span>
+      <span class="brand-ver">v2.0.1</span>
     </div>
 
     <select id="operation" style="display: none;">
@@ -98,13 +98,26 @@
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
 
+        // 1. Check for saved theme preference on startup
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.classList.add('light-mode');
+            themeIcon.className = 'ti ti-sun';
+        } else {
+            document.documentElement.classList.remove('light-mode');
+            themeIcon.className = 'ti ti-moon';
+        }
+
+        // 2. Toggle and save preference on click
         themeToggle.addEventListener('click', () => {
-            // Target the document element (html / :root) instead of body
             document.documentElement.classList.toggle('light-mode');
+
             if (document.documentElement.classList.contains('light-mode')) {
                 themeIcon.className = 'ti ti-sun';
+                localStorage.setItem('theme', 'light');
             } else {
                 themeIcon.className = 'ti ti-moon';
+                localStorage.setItem('theme', 'dark');
             }
         });
 
