@@ -56,7 +56,6 @@ app.whenReady().then(() => {
   console.log(`FFmpeg path: ${ffmpegPath}`);
   console.log(`FFprobe path: ${ffprobePath}`);
 
-  // Redesigned UI size (Widescreen dual-panel configuration)
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -71,7 +70,6 @@ app.whenReady().then(() => {
 
   mainWindow.setMenu(null);
 
-  // Load your index.html file
   mainWindow.loadFile('index.html');
 
   mainWindow.on('close', () => {

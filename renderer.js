@@ -113,24 +113,18 @@ function updateOperationUI() {
 
     const operation = operationSelect.value;
 
-    // --- Start Fade Out ---
-    // Set opacity to 0 to begin the fade out transition of the current content.
-    // The CSS transition will handle the animation.
+    // Fade Out
     operationDetailsDiv.style.opacity = '0';
-    // --- End Fade Out ---
-
-    // The duration below (200ms) should ideally be less than or equal to the CSS transition duration (0.5s = 500ms).
-    const fadeDelay = 200; // Adjust delay if needed
+    const fadeDelay = 200;
 
     setTimeout(() => {
-        // Clear the content *after* the fade out has had time to start
         operationDetailsDiv.innerHTML = '';
 
         // Reset the current operation module when changing operations
         currentOperationModule = null;
 
         // Reset temporary file path when operation changes
-        // Keep this if you still have the concatenate logic
+        // can break concatenate logic?
         if (typeof deleteTempConcatFile === 'function') {
             deleteTempConcatFile();
         }
@@ -147,11 +141,8 @@ function updateOperationUI() {
             const operationModule = require(`./operations/${operation.toLowerCase()}`);
             currentOperationModule = operationModule;
 
-            // --- Insert New Content ---
             // Insert the new HTML content into the div
             operationDetailsDiv.innerHTML = operationModule.getUIHtml();
-            // --- End Insert New Content ---
-
 
             // Attach event listeners for the new UI elements
             if (typeof operationModule.attachEventListeners === 'function') {
@@ -183,14 +174,12 @@ function updateOperationUI() {
             operationDetailsDiv.innerHTML = `<p style="color: red;">Error loading operation UI. Check console for details.</p>`;
             runButton.disabled = true;
 
-            // --- Fade In Error Message ---
             // Also fade in the error message itself
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     operationDetailsDiv.style.opacity = '1';
                 });
             });
-            // --- End Fade In Error Message ---
         }
     }, fadeDelay); // End of setTimeout
 }
